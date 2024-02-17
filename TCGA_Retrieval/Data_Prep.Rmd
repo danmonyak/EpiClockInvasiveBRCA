@@ -9,7 +9,15 @@ output: html_document
 if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
-BiocManager::install("TCGAbiolinks")
+if (!require("devtools", quietly = TRUE))
+  install.packages('devtools')
+
+if (!require("dbplyr", quietly = TRUE))
+  devtools::install_version("dbplyr", version = "2.3.4")
+
+if (!require("TCGAbiolinks", quietly = TRUE))
+  BiocManager::install("TCGAbiolinks", force = TRUE)
+
 # BiocManager::install("sesameData")
 # BiocManager::install("Sesame")
 # BiocManager::install("sesame")
@@ -98,7 +106,7 @@ common.patients <- intersect(
 )
 
 # DELETE
-common.patients <- common.patients[1:10]
+# common.patients <- common.patients[1:50]
 #
 ```
 There are `r length(unique(common.patients))` tumors of interest with at least one set of methylation and gene expression data.
