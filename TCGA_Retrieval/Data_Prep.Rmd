@@ -9,9 +9,6 @@ output: html_document
 if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
-if (!require("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-
 if (!requireNamespace("devtools"))
   install.packages('devtools')
 
