@@ -2,14 +2,11 @@
 if (!require("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 
-if (!requireNamespace("devtools"))
-  install.packages('devtools')
-
-if (!requireNamespace("rmarkdown"))
-  devtools::install_github('rstudio/rmarkdown')
-
-if (!require("dbplyr", quietly = TRUE))
-  devtools::install_version("dbplyr", version = "2.3.4")
+# if (!requireNamespace("devtools"))
+#   install.packages('devtools')
+# 
+# if (!require("dbplyr", quietly = TRUE))
+#   devtools::install_version("dbplyr", version = "2.3.4")
 
 if (!require("TCGAbiolinks", quietly = TRUE))
   BiocManager::install("TCGAbiolinks", force = TRUE)
