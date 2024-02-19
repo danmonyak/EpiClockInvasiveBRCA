@@ -35,6 +35,9 @@ knitr::opts_chunk$set(echo = TRUE)
 # This package streamlines the data pull from GDC
 library(TCGAbiolinks)
 
+# Accessing home directory path
+library('fs')
+
 ####### Daniel -- answer these questions and you should just be able to knit
 ductal_only <- FALSE
 female_only <- TRUE
@@ -42,8 +45,9 @@ project <- "TCGA-BRCA"
 # Set to TRUE if you want to save all of the data objects
 save_data <- TRUE
 # directory where all files will be saved
-save_path <- "data_objects/"
-dir.create(save_path, showWarnings = FALSE)
+# must already exist
+save_path <- file.path(as.character(path_home()), "Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/TCGA/")
+GDCdata_dir <- paste0(save_path, 'GDCdata')
 
 # Do not add file type ending -- just name
 methyl_filename <- "cohort1.methyl"
@@ -107,10 +111,6 @@ common.patients <- intersect(
   common.patients,
   query_clinical$submitter_id[tumor_subset]
 )
-
-# DELETE
-# common.patients <- common.patients[1:50]
-#
 ```
 There are `r length(unique(common.patients))` tumors of interest with at least one set of methylation and gene expression data.
 
@@ -139,9 +139,10 @@ clinical_final <- query_clinical[query_clinical$bcr_patient_barcode %in% common.
 write.table(clinical_final, paste0(save_path, 'sample_annotations.txt'), quote=FALSE)
 
 # download and save the gene expression data
-GDCdownload(query_gene)
+GDCdownload(query_gene, directory = GDCdata_dir)
 data.seq <- GDCprepare(query_gene, save = TRUE, 
-                       save.filename = paste0(save_path, gene_filename, ".RData"))
+                       save.filename = paste0(save_path, gene_filename, ".RData"),
+                       directory = GDCdata_dir)
 
 # use the tpm data for methylation analysis
 tpm <- data.seq@assays@data$tpm_unstrand
@@ -153,9 +154,10 @@ tpm <- tpm[!rm_pary, ]
 saveRDS(tpm, file = paste0(save_path, gene_filename, "_tpm.rds"))
 
 # download and save the DNA methylation data
-GDCdownload(query_methyl)
+GDCdownload(query_methyl, directory = GDCdata_dir)
 data.methyl <- GDCprepare(query_methyl, save = TRUE, 
-                          save.filename = paste0(save_path, methyl_filename, ".RData"))
+                          save.filename = paste0(save_path, methyl_filename, ".RData"),
+                          directory = GDCdata_dir)
 methyl <- data.methyl@assays@data[[1L]]
 saveRDS(methyl, file = paste0(save_path, methyl_filename, ".rds"))
 
