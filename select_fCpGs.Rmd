@@ -1,0 +1,29 @@
+---
+title: "Select fCpGs"
+output: html_document
+date: "2024-02-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Import data
+
+```{r pressure, echo=FALSE}
+library(readr)
+ncomms9971_s2 <- read_csv("~/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/TCGA/ncomms9971-s2.csv")
+cohort1.methyl <- readRDS("~/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/TCGA/cohort1.methyl.rds")
+cohort1.clinical <- read.table("~/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/TCGA/cohort1.clinical.tsv")
+```
+```{r}
+getSampleName <- function(extended.sample) {
+  paste(strsplit(extended.sample, "-")[[1]][1:4], collapse = '-')
+}
+CPE_threshold <- 0.6
+pure.samples <- ncomms9971_s2[ncomms9971_s2$CPE >= CPE_threshold, 'Sample ID']
+
+length(colnames(cohort1.methyl))
+colnames(cohort1.methyl) 
+```
+
