@@ -9,6 +9,18 @@ import MolecularClocks.src.methylation_util as m_util
 consts = getConsts()
 TCGA_datadir = os.path.join(consts['official_indir'], 'TCGA')
 
+# Dictionary defines acceptable ranges (inclusive) for each value
+BALANCED_CRITERIA = {
+    'normal':{
+        'beta_nans':(0, 20),
+        'beta_means':(0.4, 0.6)
+    },
+    'tumor':{
+        'beta_nans':(0, 20),
+        'beta_means':(0.4, 0.6)
+    }
+}
+
 def getNeutralDNACpGs():
     TCGA_datadir = os.path.join(consts['official_indir'], 'TCGA')
     
@@ -71,37 +83,30 @@ def getDataDict():
     # Get purity values of remaining tumors/normals
     data['tumor']['purity'] = purityEstimates.loc[data['tumor']['beta_values'].columns, 'CPE']
     data['normal']['purity'] = m_util.getLUMP_values(data['normal']['beta_values'])
-    
-    return data
 
-def gen_CpG_set(data, neutral_DNA_CpG_list, only_ductals=False, n_select=500):
     for sample in ['tumor', 'normal']:
         data[sample]['pureSamples'] = data[sample]['purity'].index[data[sample]['purity'] > data[sample]['purity_threshold']].values
         data[sample]['beta_values_PURE'] = data[sample]['beta_values'][data[sample]['pureSamples']]
     
-    if only_ductals:
-        sampleIDtoPatientID = lambda x:'-'.join(x.split('-')[:-1])
-        ductal_bool = data['tumor']['beta_values_PURE'].columns.to_series().apply(sampleIDtoPatientID).isin(data['tumor']['ductal_patients'])
-        data['tumor']['beta_values_PURE'] = data['tumor']['beta_values_PURE'].loc[:, ductal_bool]
-    
+    return data
+
+def addMeanStdsNans(data):
     for sample in ['tumor', 'normal']:
         data[sample]['beta_means'] = data[sample]['beta_values_PURE'].mean(axis=1)
         data[sample]['beta_stds'] = data[sample]['beta_values_PURE'].std(axis=1)
         data[sample]['beta_nans'] = data[sample]['beta_values_PURE'].isna().sum(axis=1)
+
+def gen_CpG_set(data, neutral_DNA_CpG_list, only_ductals=False, n_select=500):
+    if only_ductals:
+        sampleIDtoPatientID = lambda x:'-'.join(x.split('-')[:-1])
+        ductal_bool = data['tumor']['beta_values_PURE'].columns.to_series().apply(sampleIDtoPatientID).isin(data['tumor']['ductal_patients'])
+        data['tumor']['beta_values_PURE'] = data['tumor']['beta_values_PURE'].loc[:, ductal_bool]
+
+    # Add beta_means, beta_stds, beta_nans to data dict
+    addMeanStdsNans(data)
     
-    # Dictionary defines acceptable ranges (inclusive) for each value
-    balanced_criteria = {
-        'normal':{
-            'beta_nans':(0, 20),
-            'beta_means':(0.4, 0.6)
-        },
-        'tumor':{
-            'beta_nans':(0, 20),
-            'beta_means':(0.4, 0.6)
-        }
-    }
     if 'allCpGs' not in data:
         data['allCpGs'] = data['tumor']['beta_values'].index.values
-    balanced_CpGs = m_util.getCpG_list(data, balanced_criteria, starting_CpG_list=neutral_DNA_CpG_list, n_select=n_select)
+    balanced_CpGs = m_util.getCpG_list(data, BALANCED_CRITERIA, starting_CpG_list=neutral_DNA_CpG_list, n_select=n_select)
     
     return balanced_CpGs
