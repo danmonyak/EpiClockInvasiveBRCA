@@ -12,8 +12,8 @@ TCGA_datadir = os.path.join(consts['official_indir'], 'TCGA')
 def getNeutralDNACpGs():
     TCGA_datadir = os.path.join(consts['official_indir'], 'TCGA')
     
-    chip450_info = pd.read_table(os.path.join(TCGA_datadir, 'chip450_annot_cleaned.txt'), index_col=0)
-    chip850_info = pd.read_table(os.path.join(TCGA_datadir, 'chip850_annot_cleaned.txt'), index_col=0)
+    chip450_info = pd.read_table(os.path.join(TCGA_datadir, 'chip450_annot_cleaned.txt'), index_col=0, low_memory=False)
+    chip850_info = pd.read_table(os.path.join(TCGA_datadir, 'chip850_annot_cleaned.txt'), index_col=0, low_memory=False)
     
     neutral_filters = [
         (chip450_info['Regulatory_Feature_Group'].isna()),
