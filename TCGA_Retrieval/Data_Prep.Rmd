@@ -136,7 +136,7 @@ query_methyl <- GDCquery(project = project,
 
 # save the clinical data
 clinical_final <- query_clinical[query_clinical$bcr_patient_barcode %in% common.patients, ]
-write.table(clinical_final, paste0(save_path, 'cohort1.clinical.tsv', sep='\t'), quote=FALSE)
+write.table(clinical_final, paste0(save_path, 'cohort1.clinical.tsv'), sep='\t', quote=FALSE)
 
 # download and save the gene expression data
 GDCdownload(query_gene, directory = GDCdata_dir)
@@ -160,6 +160,7 @@ data.methyl <- GDCprepare(query_methyl, save = TRUE,
                           directory = GDCdata_dir)
 methyl <- data.methyl@assays@data[[1L]]
 saveRDS(methyl, file = paste0(save_path, methyl_filename, ".rds"))
+write.table(methyl, paste0(save_path, methyl_filename, '.tsv'), sep='\t', quote=FALSE)
 
 # CIBERSORT data files
 
