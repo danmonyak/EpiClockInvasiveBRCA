@@ -35,9 +35,6 @@ knitr::opts_chunk$set(echo = TRUE,
 # This package streamlines the data pull from GDC
 library(TCGAbiolinks)
 
-# Accessing home directory path
-library('fs')
-
 ####### Daniel -- answer these questions and you should just be able to knit
 ductal_only <- FALSE
 female_only <- TRUE
@@ -47,7 +44,7 @@ save_data <- FALSE
 
 # Directory where all files will be saved
 # Created if it doesn't exist
-save_path <- file.path(as.character(path_home()), "Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/TCGA/")
+save_path <- "~/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/TCGA/"
 if (!dir.exists(save_path)) {
   dir.create(save_path, showWarnings = F, recursive = T)
 }
@@ -138,7 +135,7 @@ There are `r length(unique(common.patients))` tumors of interest with at least o
 We limit the tumors of interest to those with $\ge 0.6$.
 
 ```{r read_purity}
-purity_data <- read.csv("~/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/2. Repo/EpiClockInvasiveBRCA/TCGA_Retrieval/ncomms9971-s2.csv")
+purity_data <- read.csv("~/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/TCGA/ncomms9971-s2.csv")
 purity_data <- purity_data[substr(purity_data$Sample.ID, 1, 12) %in% common.patients, ]
 purity_data <- purity_data[!is.na(purity_data$CPE) & purity_data$CPE >= 0.60, ]
 purity_ids <- substr(purity_data$Sample.ID, 1, 12)
@@ -181,9 +178,9 @@ query_methyl <- GDCquery(project = project,
 write.table(query_clinical, file = paste0(save_path, clinical_filename, ".tsv"), sep = "\t")
 
 # download and save the gene expression data
-GDCdownload(query_gene)
+GDCdownload(query_gene, directory = GDCdata_dir)
 data.seq <- GDCprepare(query_gene, save = TRUE, 
-                       save.filename = paste0(save_path, gene_filename, ".RData"))
+                       save.filename = paste0(save_path, gene_filename, ".RData"), directory = GDCdata_dir)
 
 # use the tpm data for methylation analysis
 tpm <- data.seq@assays@data$tpm_unstrand
@@ -196,9 +193,9 @@ saveRDS(tpm, file = paste0(save_path, gene_filename, "_tpm.rds"))
 write.table(tpm, file = paste0(save_path, gene_filename, "_tpm.tsv", sep = "\t"))
 
 # download and save the DNA methylation data
-GDCdownload(query_methyl)
+GDCdownload(query_methyl, directory = GDCdata_dir)
 data.methyl <- GDCprepare(query_methyl, save = TRUE, 
-                          save.filename = paste0(save_path, methyl_filename, ".RData"))
+                          save.filename = paste0(save_path, methyl_filename, ".RData"), directory = GDCdata_dir)
 methyl <- data.methyl@assays@data[[1L]]
 saveRDS(methyl, file = paste0(save_path, methyl_filename, ".rds"))
 write.table(methyl, file = paste0(save_path, methyl_filename, ".tsv", sep = "\t"))
