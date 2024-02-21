@@ -2,7 +2,10 @@
 .Rhistory
 .RData
 .Ruserdata
-__pycache__
-.ipynb_checkpoints
-Select_fCpGs/.ipynb_checkpoints
 backups
+.ipynb_checkpoints
+.DS_Store
+__pycache__
+*/.ipynb_checkpoints
+*/.DS_Store
+*/__pycache__
