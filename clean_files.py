@@ -52,8 +52,6 @@ def TCGA_clinical():
     assert not clinical.index.duplicated().any()
     
     clinical = clinical.loc[~clinical['ajcc_pathologic_t'].isna()]
-    clinical['ajcc_pathologic_t'] = clinical['ajcc_pathologic_t'].apply(lambda x:x[:2])
-    clinical['ajcc_pathologic_stage'] = clinical['ajcc_pathologic_stage'].str.rstrip('ABC')
     
     ajcc_pathologic_t = clinical['ajcc_pathologic_t'].apply(lambda x:x[:2])
     ajcc_pathologic_stage = clinical['ajcc_pathologic_stage'].str.rstrip('ABC')
