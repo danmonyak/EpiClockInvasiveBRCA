@@ -161,7 +161,7 @@ query_methyl <- GDCquery(project = params$project,
                          barcode = unique(substr(common_tumors, 1L, params$participant_id_length)))
 ```
 
-```{r read_rather_get, eval = !params$save_data, echo = FALSE}
+```{r read_rather_get, eval = FALSE, echo = FALSE}
 tpm <- read.csv(paste0(params$save_path, params$gene_filename, "_tpm.tsv"), sep = "\t")
 methyl <- read.csv(paste0(params$save_path, params$methyl_filename, ".tsv"), sep = "\t")
 clinical <- read.csv(paste0(params$save_path, params$clinical_filename, ".tsv"), sep = "\t")
@@ -222,22 +222,21 @@ if (params$rm_GDCdata_dir) {
 }
 ```
 
-```{r summary_of_notes}
+```{r summary_of_notes, eval = params$save_data}
 colSums(query_clinical[, c(reasons, "note_multiple_tumors", "note_multiple_gene", "note_multiple_methyl")])
 ```
 
 The participants with a tumor sample with multiple gene or methylation data are
-```{r multiples_measurement}
+```{r multiples_measurement, eval = params$save_data}
 query_clinical$submitter_id[query_clinical$note_multiple_gene | query_clinical$note_multiple_methyl]
 ```
 
 The participants with multiple tumor samples are
-```{r multiples_tumor}
-query_clinical$submitter_id[query_clinical$note_multiple_tumors]
+```{r multiples_tumor, eval = params$save_data}query_clinical$submitter_id[query_clinical$note_multiple_tumors]
 ```
 
 Confirming expected matrix attributes
-```{r confirm_specs}
+```{r confirm_specs, eval = params$save_data}
 dim(tpm)
 dim(methyl)
 isTRUE(all(substr(colnames(tpm), 1L, params$tumor_id_length) %in% 
