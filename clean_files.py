@@ -60,7 +60,5 @@ def TCGA_clinical():
     clinical['ajcc_pathologic_t'] = ajcc_pathologic_t
     clinical['ajcc_pathologic_stage'] = ajcc_pathologic_stage
     
-    clinical['ductal'] = (clinical['primary_diagnosis']=='Infiltrating duct carcinoma, NOS')
-    
     clinical.to_csv(os.path.join(TCGA_datadir, 'cohort1.clinical.cleaned.tsv'), sep='\t')
 
