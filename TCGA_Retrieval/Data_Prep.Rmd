@@ -1,225 +1,245 @@
 ---
-title: "Procedure for extracting the methylation and gene expression data from GDC"
-author: "Shannon T. Holloway"
-date: "`r Sys.Date()`"
+title: "Obtain TCGA Dataset"
+#author: "Shannon T. Holloway"
+#date: "`r Sys.Date()`"
 output: html_document
+params:
+  project: TCGA-BRCA
+  participant_id_length: 12
+  tumor_id_length: 16
+  purity_file: "~/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/TCGA/ncomms9971-s2.csv"
+  save_data: false
+  save_path: "~/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/TCGA/"
+  GDCdata_dir: "gdc_data"
+  rm_GDCdata_dir: true
+  clinical_filename: "cohort1.clinical"
+  methyl_filename: "cohort1.methyl"
+  gene_filename: "cohort1.rnaseq"
 ---
 
-```{r install-packages}
-if (!require("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-
-if (!requireNamespace("devtools"))
-  install.packages('devtools')
-
-if (!requireNamespace("rmarkdown"))
-  devtools::install_github('rstudio/rmarkdown')
-
-if (!require("dbplyr", quietly = TRUE))
-  devtools::install_version("dbplyr", version = "2.3.4")
-
-if (!require("TCGAbiolinks", quietly = TRUE))
-  BiocManager::install("TCGAbiolinks", force = TRUE)
-```
-
-
 ```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
 
-# make sure to change this - this directory doesn't exist anymore
-# should this be in the repo or in Box?
-knitr::opts_chunk$set(echo = TRUE, 
-                      root.dir = "~/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/2. Repo/EpiClockInvasiveBRCA/TCGA_Retrieval/")
-```
-
-```{r settings}
 # This package streamlines the data pull from GDC
 library(TCGAbiolinks)
-
-####### Daniel -- answer these questions and you should just be able to knit
-ductal_only <- FALSE
-female_only <- TRUE
-project <- "TCGA-BRCA"
-# Set to TRUE if you want to save all of the data objects
-save_data <- FALSE
-
-# Directory where all files will be saved
-# Created if it doesn't exist
-save_path <- "~/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/TCGA/"
-if (!dir.exists(save_path)) {
-  dir.create(save_path, showWarnings = F, recursive = T)
-}
-
-# Temporary data storage directory
-GDCdata_dir <- paste0(save_path, 'GDCdata')
-
-# Do not add file type ending -- just name
-clinical_filename <- "cohort1.clinical"
-# Do not add file type ending -- just name
-methyl_filename <- "cohort1.methyl"
-# Do not add file type ending -- just name
-gene_filename <- "cohort1.rnaseq"
-
-message("The subset of interest comprises ", 
-        ifelse(female_only, "females ", "males & females "), "with ",
-        ifelse(ductal_only, "ductal ", "any type "), "tumors")
 ```
 
 ```{r query_clinical_data}
-query_clinical <- GDCquery_clinic(project = project, type = "clinical")
+query_clinical <- GDCquery_clinic(project = params$project, type = "clinical")
 
-# we are only interest in primary tumor_subset tumors
-if (ductal_only) {
-  ductal <- !is.na(query_clinical$primary_diagnosis) & 
-    query_clinical$primary_diagnosis == "Infiltrating duct carcinoma, NOS"
-} else {
-  ductal <- rep(TRUE, length(query_clinical$primary_diagnosis))
-}
+# We limit our dataset to include tumors from only female participants
+is_female <- !is.na(query_clinical$gender) & query_clinical$gender == "female"
+query_clinical$reason_gender <- !is_female
+reasons <- "reason_gender"
 
-if (female_only) {
-  female <- !is.na(query_clinical$gender) & query_clinical$gender == "female"
-} else {
-  female <- rep(TRUE, length(query_clinical$gender))
-}
-tumor_subset <- ductal & female
-query_clinical$reason_tumor_type <- !ductal
-query_clinical$reason_gender <- !female
-reasons <- c("reason_tumor_type", "reason_gender")
+participant_subset <- query_clinical$submitter_id[is_female]
 ```
-There are `r sum(tumor_subset, na.rm = TRUE)` records in the requested subset.
+Of the `r nrow(query_clinical)` clinical records, 
+`r sum(is_female, na.rm = TRUE)` are from female participants.
 
 ```{r query_gene_data}
-query_gene <- GDCquery(project = project, 
-                       data.category = 'Transcriptome Profiling', 
-                       data.type = 'Gene Expression Quantification', 
-                       workflow.type = 'STAR - Counts',
-                       experimental.strategy = "RNA-Seq",
-                       sample.type = c("Primary Tumor"))
-gene_ids <- substr(getResults(query_gene, cols = "cases"), 1, 12)
-has_gene <- query_clinical$submitter_id %in% gene_ids
-query_clinical$reason_gene <- !has_gene
-reasons <- c(reasons, "reason_gene")
-```
-Of the `r length(unique(gene_ids))` tumors represented in the gene expression dataset, `r sum(unique(gene_ids) %in% query_clinical$submitter_id[tumor_subset])` are in the subset of interest. There are `r sum(duplicated(gene_ids))` duplicated tumor ids.
-
-```{r query_methyl_data}
-query_methyl <- GDCquery(project = project, 
-                         data.category = 'DNA Methylation', 
-                         platform = c("Illumina Human Methylation 450"),
-                         data.type = "Methylation Beta Value",
-                         sample.type = c("Primary Tumor"))
-methyl_ids <- substr(getResults(query_methyl, cols = "cases"), 1, 12)
-has_methyl <- query_clinical$submitter_id %in% methyl_ids
-query_clinical$reason_methyl <- !has_methyl
-reasons <- c(reasons, "reason_methyl")
-```
-Of the `r length(unique(methyl_ids))` tumors represented in the methylation dataset, `r sum(unique(methyl_ids) %in% query_clinical$submitter_id[tumor_subset])` are in the subset of interest. There are `r sum(duplicated(methyl_ids[methyl_ids %in% query_clinical$submitter_id[tumor_subset]]))` duplicated tumor ids in this subset.
-
-```{r present_in_both_gene_and_methyl}
-# must have both gene data and methylation data
-common.patients <- intersect(
-  substr(getResults(query_methyl, cols = "cases"), 1, 12),
-  substr(getResults(query_gene, cols = "cases"), 1, 12)
-)
-```
-Of the `r sum(unique(methyl_ids) %in% query_clinical$submitter_id[tumor_subset])` tumors of interest in the methylation data, `r sum(unique(methyl_ids) %in% common.patients & unique(methyl_ids) %in% query_clinical$submitter_id[tumor_subset])` have gene expression data.
-
-```{r limit_to_tumor_subset}
-# must be tumor_subset
-common.patients <- intersect(
-  common.patients,
-  query_clinical$submitter_id[tumor_subset]
-)
-```
-There are `r length(unique(common.patients))` tumors of interest with at least one set of methylation and gene expression data.
-
-We limit the tumors of interest to those with $\ge 0.6$.
-
-```{r read_purity}
-purity_data <- read.csv("~/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/TCGA/ncomms9971-s2.csv")
-purity_data <- purity_data[substr(purity_data$Sample.ID, 1, 12) %in% common.patients, ]
-purity_data <- purity_data[!is.na(purity_data$CPE) & purity_data$CPE >= 0.60, ]
-purity_ids <- substr(purity_data$Sample.ID, 1, 12)
-common.patients <- intersect(
-  common.patients,
-  purity_ids
-)
-has_purity <- query_clinical$submitter_id %in% purity_ids
-query_clinical$reason_purity <- !has_purity
-reasons <- c(reasons, "reason_purity")
-```
-There are `r length(unique(common.patients))` tumors of interest with at least one set of methylation and gene expression data and CPE purity $\ge 0.6$.
-
-```{r limit_queries_to_common_cases}
-# add column to clinical data indicating if it is kept in our dataset
-query_clinical$in_dataset <- query_clinical$submitter_id %in% common.patients
-code_given <- apply(query_clinical[, reasons], 1, any)
-print(c(sum(query_clinical$in_dataset), sum(!code_given)))
-colSums(query_clinical[, reasons])
-
-# redefine queries with only the common samples
-query_gene <- GDCquery(project = project, 
+query_gene <- GDCquery(project = params$project, 
                        data.category = 'Transcriptome Profiling', 
                        data.type = 'Gene Expression Quantification', 
                        workflow.type = 'STAR - Counts',
                        experimental.strategy = "RNA-Seq",
                        sample.type = c("Primary Tumor"),
-                       barcode = common.patients)
+                       barcode = participant_subset)
 
-query_methyl <- GDCquery(project = project, 
+gene_participant_ids <- substr(getResults(query_gene, cols = "cases"), 1L, params$participant_id_length)
+gene_tumor_ids <- substr(getResults(query_gene, cols = "cases"), 1L, params$tumor_id_length)
+
+# We limit our dataset to include only participants with gene expression data
+has_gene <- query_clinical$submitter_id %in% gene_participant_ids
+query_clinical$reason_gene <- !has_gene & is_female
+reasons <- c(reasons, "reason_gene")
+```
+Of the `r length(participant_subset)` participants of interest, `r length(unique(gene_participant_ids))` have gene expression data available. There are `r sum(duplicated(gene_participant_ids))` duplicated participant ids in the gene expression dataset and `r sum(duplicated(gene_tumor_ids))` duplicated tumor ids.
+
+```{r query_methyl_data}
+query_methyl <- GDCquery(project = params$project, 
+                         data.category = 'DNA Methylation', 
+                         platform = c("Illumina Human Methylation 450"),
+                         data.type = "Methylation Beta Value",
+                         sample.type = c("Primary Tumor"),
+                         barcode = participant_subset)
+
+# We limit our dataset to include only participants with methylation data
+methyl_participant_ids <- substr(getResults(query_methyl, cols = "cases"), 1L, params$participant_id_length)
+methyl_tumor_ids <- substr(getResults(query_methyl, cols = "cases"), 1L, params$tumor_id_length)
+
+has_methyl <- query_clinical$submitter_id %in% methyl_participant_ids
+query_clinical$reason_methyl <- !has_methyl & is_female
+reasons <- c(reasons, "reason_methyl")
+```
+Of the `r length(participant_subset)` participants of interest, `r length(unique(methyl_participant_ids))` have methylation data available. There are `r sum(duplicated(methyl_participant_ids))` duplicated participant ids in the methylation dataset and `r sum(duplicated(methyl_tumor_ids))` duplicated tumor ids.
+
+
+```{r present_in_both_gene_and_methyl}
+# We limit our data set to include only tumors with both gene data and 
+#   methylation data
+common_tumors <- intersect(gene_tumor_ids, methyl_tumor_ids)
+```
+Of the `r length(unique(methyl_tumor_ids))` tumor samples in the methylation data, `r length(common_tumors)` also have gene expression data.
+
+We limit the tumors of interest to those with CPE $\ge 0.6$.
+
+```{r read_purity}
+purity_data <- read.csv(params$purity_file)
+
+# limit purity data to only those tumors with gene and methylation data
+purity_data <- purity_data[substr(purity_data$Sample.ID, 1L, params$tumor_id_length) %in% common_tumors, ]
+
+# We limit our analyses to tumors with CPE >= 0.60
+purity_data <- purity_data[!is.na(purity_data$CPE) & purity_data$CPE >= 0.60, ]
+
+purity_participant_ids <- substr(purity_data$Sample.ID, 1L, params$participant_id_length)
+purity_tumor_ids <- substr(purity_data$Sample.ID, 1L, params$tumor_id_length)
+
+common_tumors <- intersect(common_tumors, purity_tumor_ids)
+
+has_purity <- query_clinical$submitter_id %in% purity_participant_ids
+query_clinical$reason_purity <- !has_purity
+reasons <- c(reasons, "reason_purity")
+```
+For the `r length(participant_subset)` participants of interest, there are `r length(common_tumors)` tumors with methylation and gene expression data and CPE purity $\ge 0.6$. There are `r sum(duplicated(substr(common_tumors, 1L, params$participant_id_length)))` duplicated participant ids in this tumor subset.
+
+```{r multiple_tumor_per_participant, echo = FALSE}
+dups <- duplicated(substr(common_tumors, 1L, params$participant_id_length)) | 
+  duplicated(substr(common_tumors, 1L, params$participant_id_length), fromLast = TRUE)
+```
+`r if(any(dups)) {paste("Participants with multiple tumors: ", paste(unique(substr(common_tumors, 1L, params$participant_id_length)[dups]), collapse = ", "), ".")}`
+```{r keep_one_tumor_per_participant, echo = any(dups)}
+has_multiple_tumors <- query_clinical$submitter_id %in% {substr(common_tumors, 1L, params$participant_id_length)[dups]}
+query_clinical$note_multiple_tumors <- has_multiple_tumors
+
+# We drop the "B" tumor for each participant
+common_tumors <- setdiff(common_tumors, paste0(substr(common_tumors[dups], 1L, params$participant_id_length), "-01B"))
+```
+There are `r length(common_tumors)` tumors with methylation and gene expression data and CPE purity $\ge 0.6$; `r sum(duplicated(substr(common_tumors, 1L, params$participant_id_length)))` of which are from the same participant.
+
+```{r limit_queries_to_common_cases}
+# add column to clinical data indicating if participant is kept in our dataset
+query_clinical$in_CpG_dataset <- query_clinical$submitter_id %in% substr(common_tumors, 1L, params$participant_id_length)
+
+# ensure that something did not go wrong
+code_given <- apply(query_clinical[, reasons], 1L, any)
+
+colSums(query_clinical[, reasons])
+
+# The analysis dataset will be only the ductal tumors
+query_clinical$in_analysis_dataset <- 
+  query_clinical$primary_diagnosis == "Infiltrating duct carcinoma, NOS"
+```
+
+ENSURE THESE TWO NUMBERS AGREE: `r sum(query_clinical$in_CpG_dataset)` and `r sum(!code_given)`.
+
+The total number of cases removed for cause are as follows:
+```{r}
+colSums(query_clinical[, c(reasons, "note_multiple_tumors")])
+```
+Note that the "gender" category is w.r.t. the full `r params$project` dataset. All others are
+w.r.t. the "Female Only" subset.
+
+```{r retrieve_final_dataset}
+# redefine queries with only the common samples
+# Note that this subset is based on participant ids, not tumor ids.
+# We will need to reprocess the above observations
+query_gene <- GDCquery(project = params$project, 
+                       data.category = 'Transcriptome Profiling', 
+                       data.type = 'Gene Expression Quantification', 
+                       workflow.type = 'STAR - Counts',
+                       experimental.strategy = "RNA-Seq",
+                       sample.type = c("Primary Tumor"),
+                       barcode = unique(substr(common_tumors, 1L, params$participant_id_length)))
+
+query_methyl <- GDCquery(project = params$project, 
                          data.category = 'DNA Methylation', 
                          platform = c("Illumina Human Methylation 450"),
                          sample.type = c("Primary Tumor"),
                          data.type = "Methylation Beta Value",
-                         barcode = common.patients)
+                         barcode = unique(substr(common_tumors, 1L, params$participant_id_length)))
 ```
 
-```{r download_and_save, eval = save_data}
-# save the clinical data
-write.table(query_clinical, file = paste0(save_path, clinical_filename, ".tsv"), sep = "\t")
+```{r read_rather_get, eval = !params$save_data, echo = FALSE}
+tpm <- read.csv(paste0(params$save_path, params$gene_filename, "_tpm.tsv"), sep = "\t")
+methyl <- read.csv(paste0(params$save_path, params$methyl_filename, ".tsv"), sep = "\t")
+clinical <- read.csv(paste0(params$save_path, params$clinical_filename, ".tsv"), sep = "\t")
+```
 
+
+```{r download_and_save, eval = params$save_data}
 # download and save the gene expression data
-GDCdownload(query_gene, directory = GDCdata_dir)
-data.seq <- GDCprepare(query_gene, save = TRUE, 
-                       save.filename = paste0(save_path, gene_filename, ".RData"), directory = GDCdata_dir)
-
+GDCdownload(query_gene, directory = paste0(params$save_path, params$GDCdata_dir))
+data.seq <- GDCprepare(query_gene, 
+                       directory = paste0(params$save_path, params$GDCdata_dir))
 # use the tpm data for methylation analysis
 tpm <- data.seq@assays@data$tpm_unstrand
 colnames(tpm) <- rownames(data.seq@colData)
 rm_pary <- grepl("PAR_Y", data.seq@rowRanges$gene_id)
-rownames(tpm) <- substr(data.seq@rowRanges$gene_id, 1, 15)
+rownames(tpm) <- substr(data.seq@rowRanges$gene_id, 1L, 15L)
 tpm <- tpm[!rm_pary, ]
 
-saveRDS(tpm, file = paste0(save_path, gene_filename, "_tpm.rds"))
-write.table(tpm, file = paste0(save_path, gene_filename, "_tpm.tsv", sep = "\t"))
+# subset to the specific tumors of interest
+tpm <- tpm[, substr(colnames(tpm), 1L, params$tumor_id_length) %in% common_tumors]
+# some tumors have multiple gene expression datasets, remove 1
+dups <- duplicated(substr(colnames(tpm), 1L, params$tumor_id_length))
+
+has_multiple_gene <- query_clinical$submitter_id %in% 
+  substr(colnames(tpm), 1L, params$participant_id_length)[dups]
+query_clinical$note_multiple_gene <- has_multiple_gene
+
+tpm <- tpm[, !dups]
+write.table(tpm, file = paste0(params$save_path, params$gene_filename, "_tpm.tsv"), 
+            sep = "\t")
 
 # download and save the DNA methylation data
-GDCdownload(query_methyl, directory = GDCdata_dir)
-data.methyl <- GDCprepare(query_methyl, save = TRUE, 
-                          save.filename = paste0(save_path, methyl_filename, ".RData"), directory = GDCdata_dir)
+GDCdownload(query_methyl, directory = paste0(params$save_path, params$GDCdata_dir))
+data.methyl <- GDCprepare(query_methyl, 
+                          directory = paste0(params$save_path, params$GDCdata_dir))
+
 methyl <- data.methyl@assays@data[[1L]]
-saveRDS(methyl, file = paste0(save_path, methyl_filename, ".rds"))
-write.table(methyl, file = paste0(save_path, methyl_filename, ".tsv", sep = "\t"))
+colnames(methyl) <- rownames(data.methyl@colData)
 
-# CIBERSORT data files
+# subset to the specific tumors
+methyl <- methyl[, substr(colnames(methyl), 1L, params$tumor_id_length) %in% common_tumors]
+# some tumors have multiple methylation datasets, remove 1
+dups <- duplicated(substr(colnames(methyl), 1L, params$tumor_id_length))
 
-# We use the unstranded count for the mixture matrix in CIBERSORT
-# The PAR_Y are y-chromosome, which we do not use
-# unstranded <- data.seq@assays@data$unstranded
-# colnames(unstranded) <- rownames(data.seq@colData)
-# rm_pary <- grepl("PAR_Y", data.seq@rowRanges$gene_id)
-# rownames(unstranded) <- substr(data.seq@rowRanges$gene_id, 1, 15)
-# unstranded <- unstranded[!rm_pary, ]
-# 
-# write.table(unstranded, quote = FALSE, sep = "\t",
-#             file = paste0(save_path, gene_filename, "_count.txt"))
-# 
-# # convert counts to CPM and save matrix for CIBERSORT
-# unstranded_cpm <- edgeR::DGEList(counts = unstranded)
-# unstranded_cpm <- edgeR::calcNormFactors(unstranded_cpm)
-# unstranded_cpm <- edgeR::cpm(unstranded_cpm)
-# write.table(unstranded, quote = FALSE, sep = "\t",
-#             file = paste0(save_path, gene_filename, "_cpm_by_edgeR.txt"))
-# 
-# message("* * * \n The mixture matrix using Ensembl IDs rather than Gene Names")
-# message("* * * \n REMEMBER TO ADD COLUMN HEADER FOR GENE NAMES TO THE CIBERSORT .txt FILES")
+has_multiple_methyl <- query_clinical$submitter_id %in% substr(colnames(methyl), 1L, params$participant_id_length)[dups]
+query_clinical$note_multiple_methyl <- has_multiple_methyl
+
+methyl <- methyl[, !dups]
+write.table(methyl, 
+            file = paste0(params$save_path, params$methyl_filename, ".tsv"), 
+            sep = "\t")
+
+# save the clinical data
+write.table(query_clinical, file = paste0(params$save_path, params$clinical_filename, ".tsv"), sep = "\t")
+
+if (params$rm_GDCdata_dir) {
+  unlink(paste0(params$save_path, params$GDCdata_dir), recursive = TRUE)
+}
+```
+
+```{r summary_of_notes}
+colSums(query_clinical[, c(reasons, "note_multiple_tumors", "note_multiple_gene", "note_multiple_methyl")])
+```
+
+The participants with a tumor sample with multiple gene or methylation data are
+```{r multiples_measurement}
+query_clinical$submitter_id[query_clinical$note_multiple_gene | query_clinical$note_multiple_methyl]
+```
+
+The participants with multiple tumor samples are
+```{r multiples_tumor}
+query_clinical$submitter_id[query_clinical$note_multiple_tumors]
+```
+
+Confirming expected matrix attributes
+```{r confirm_specs}
+dim(tpm)
+dim(methyl)
+isTRUE(all(substr(colnames(tpm), 1L, params$tumor_id_length) %in% 
+             substr(colnames(methyl), 1L, params$tumor_id_length)))
 ```
