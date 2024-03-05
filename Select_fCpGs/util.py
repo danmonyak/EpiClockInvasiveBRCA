@@ -58,67 +58,79 @@ def getDataDict():
     idx_normal = data['normal']['beta_values'].index
     assert idx_tumor.isin(idx_normal).all()
     assert idx_normal.isin(idx_tumor).all()
-    
+
     # Use the same order of CpGs in the index
     data['allCpGs'] = idx_tumor.values
     data['normal']['beta_values'] = data['normal']['beta_values'].loc[data['allCpGs']]
 
-    # Store purity thresholds
-    data['tumor']['purity_threshold'] = consts['CPE_threshold']
-    data['normal']['purity_threshold'] = consts['lump_threshold']('Johnson')
-    
     # Import clinical data
-    data['tumor']['clinical'] = pd.read_table(os.path.join(TCGA_datadir, 'cohort1.clinical.cleaned.tsv'), index_col=0)
-    data['tumor']['ductal_patients'] = data['tumor']['clinical'].loc[data['tumor']['clinical']['ductal'], 'submitter_id'].values
-    
+    data['tumor']['clinical'] = pd.read_table(os.path.join(TCGA_datadir, 'cohort1.clinical.tsv'), index_col=0)
+    assert data['tumor']['clinical']['submitter_id'].is_unique
+    data['tumor']['clinical'] = data['tumor']['clinical'].set_index('submitter_id')
+
+    data['tumor']['ductal_patients'] = data['tumor']['clinical'].index[
+        data['tumor']['clinical']['in_analysis_dataset'] & data['tumor']['clinical']['in_CpG_dataset']
+    ].values
+
     # Clip unnecessary accessions from sample IDs
     shortenSampleIDs = lambda x:'-'.join(x.split('-')[:4])
     data['tumor']['beta_values'] = data['tumor']['beta_values'].rename(shortenSampleIDs, axis='columns')
     
-    print(f"Starting with {data['tumor']['beta_values'].shape[1]} tumors")
+    print(f"Selecting CpGs with {data['tumor']['beta_values'].shape[1]} tumors")
     
-    # Import purity estimates
-    # purityEstimates = consts['purityEstimates']()
-    purityEstimates = pd.read_csv(os.path.join(TCGA_datadir, 'ncomms9971-s2.csv'), index_col=0)
+#     # Import purity estimates
+#     # purityEstimates = consts['purityEstimates']()
+#     purityEstimates = pd.read_csv(os.path.join(TCGA_datadir, 'ncomms9971-s2.csv'), index_col=0)
 
-    # Remove duplicate tumors and those without a purity estimate
+#     # Remove duplicate tumors and those without a purity estimate
     
-    duplicated_bool = data['tumor']['beta_values'].columns.duplicated(keep=False)
-    print(f'Removing {duplicated_bool.sum()} tumors for not being from unique patients')
-    print(data['tumor']['beta_values'].columns[duplicated_bool])
-    data['tumor']['beta_values'] = data['tumor']['beta_values'].loc[:, ~duplicated_bool]
+#     duplicated_bool = data['tumor']['beta_values'].columns.duplicated(keep=False)
+#     print(f'Removing {duplicated_bool.sum()} tumors for not being from unique patients')
+#     print(data['tumor']['beta_values'].columns[duplicated_bool])
+#     data['tumor']['beta_values'] = data['tumor']['beta_values'].loc[:, ~duplicated_bool]
 
-    noPurity_bool = ~data['tumor']['beta_values'].columns.isin(purityEstimates.index)
-    print(f'Removing {noPurity_bool.sum()} tumors for not having a purity estimate')
-    print(data['tumor']['beta_values'].columns[noPurity_bool])
-    data['tumor']['beta_values'] = data['tumor']['beta_values'].loc[:, ~noPurity_bool]
+#     noPurity_bool = ~data['tumor']['beta_values'].columns.isin(purityEstimates.index)
+#     print(f'Removing {noPurity_bool.sum()} tumors for not having a purity estimate')
+#     print(data['tumor']['beta_values'].columns[noPurity_bool])
+#     data['tumor']['beta_values'] = data['tumor']['beta_values'].loc[:, ~noPurity_bool]
     
-    # Get purity values of remaining tumors/normals
-    data['tumor']['purity'] = purityEstimates.loc[data['tumor']['beta_values'].columns, 'CPE']
-    data['normal']['purity'] = m_util.getLUMP_values(data['normal']['beta_values'])
+#     # Get purity values of remaining tumors/normals
+#     data['tumor']['purity'] = purityEstimates.loc[data['tumor']['beta_values'].columns, 'CPE']
+#     data['normal']['purity'] = m_util.getLUMP_values(data['normal']['beta_values'])
 
-    for sample in ['tumor', 'normal']:
-        data[sample]['pureSamples'] = data[sample]['purity'].index[data[sample]['purity'] >= data[sample]['purity_threshold']].values
+#     for sample in ['tumor', 'normal']:
+#         data[sample]['pureSamples'] = data[sample]['purity'].index[data[sample]['purity'] >= data[sample]['purity_threshold']].values
     
     return data
 
 def addMeanStdsNans(data):
     for sample in ['tumor', 'normal']:
-        if 'beta_values_PURE' not in data[sample]:
-            data[sample]['beta_values_PURE'] = data[sample]['beta_values'][data[sample]['pureSamples']]
+#         if 'beta_values_CpG_SELECTION' not in data[sample]:
+# #             data[sample]['beta_values_PURE'] = data[sample]['beta_values'][data[sample]['pureSamples']]
+
             
-        data[sample]['beta_means'] = data[sample]['beta_values_PURE'].mean(axis=1)
-        data[sample]['beta_stds'] = data[sample]['beta_values_PURE'].std(axis=1)
-        data[sample]['beta_nans'] = data[sample]['beta_values_PURE'].isna().sum(axis=1)
+#         data[sample]['beta_means'] = data[sample]['beta_values_CpG_SELECTION'].mean(axis=1)
+#         data[sample]['beta_stds'] = data[sample]['beta_values_CpG_SELECTION'].std(axis=1)
+#         data[sample]['beta_nans'] = data[sample]['beta_values_CpG_SELECTION'].isna().sum(axis=1)
+
+        data[sample]['beta_means'] = data[sample]['beta_values_SELECTION'].mean(axis=1)
+        data[sample]['beta_stds'] = data[sample]['beta_values_SELECTION'].std(axis=1)
+        data[sample]['beta_nans'] = data[sample]['beta_values_SELECTION'].isna().sum(axis=1)
 
 def gen_CpG_set(data, neutral_DNA_CpG_list, only_ductals=False, n_select=500):
-    for sample in ['tumor', 'normal']:
-        data[sample]['beta_values_PURE'] = data[sample]['beta_values'][data[sample]['pureSamples']]
+#     for sample in ['tumor', 'normal']:
+# #         data[sample]['beta_values_PURE'] = data[sample]['beta_values'][data[sample]['pureSamples']]
     
+    data['normal']['beta_values_SELECTION'] = data['normal']['beta_values']
     if only_ductals:
         sampleIDtoPatientID = lambda x:'-'.join(x.split('-')[:-1])
-        ductal_bool = data['tumor']['beta_values_PURE'].columns.to_series().apply(sampleIDtoPatientID).isin(data['tumor']['ductal_patients'])
-        data['tumor']['beta_values_PURE'] = data['tumor']['beta_values_PURE'].loc[:, ductal_bool]
+#         ductal_bool = data['tumor']['beta_values_CpG_SELECTION'].columns.to_series().apply(sampleIDtoPatientID).isin(data['tumor']['ductal_patients'])
+        ductal_bool = data['tumor']['beta_values'].columns.to_series().apply(sampleIDtoPatientID).isin(data['tumor']['ductal_patients'])
+        data['tumor']['beta_values_SELECTION'] = data['tumor']['beta_values'].loc[:, ductal_bool]
+    else:
+        data['tumor']['beta_values_SELECTION'] = data['tumor']['beta_values']
+    
+    
     
     # Add beta_means, beta_stds, beta_nans to data dict
     addMeanStdsNans(data)
