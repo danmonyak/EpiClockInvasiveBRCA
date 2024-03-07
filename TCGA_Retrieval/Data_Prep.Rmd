@@ -201,7 +201,7 @@ tpm <- tpm[, !dups]
 # store Ensembl IDs and gene names
 rm_pary <- grepl("PAR_Y", data.seq@rowRanges$gene_id)
 tpm$gene_id <- data.seq@rowRanges$gene_id
-tmp$gene_name <- data.seq@rowRanges$gene_name
+tpm$gene_name <- data.seq@rowRanges$gene_name
 tpm <- tpm[!rm_pary, ]
 
 # Note there are duplicate gene names
