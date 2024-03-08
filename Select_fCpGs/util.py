@@ -65,8 +65,8 @@ def getDataDict():
 
     # Import clinical data
     data['tumor']['clinical'] = pd.read_table(os.path.join(TCGA_datadir, 'cohort1.clinical.tsv'), index_col=0)
-    assert data['tumor']['clinical']['submitter_id'].is_unique
-    data['tumor']['clinical'] = data['tumor']['clinical'].set_index('submitter_id')
+    assert data['tumor']['clinical']['bcr_patient_barcode'].is_unique
+    data['tumor']['clinical'] = data['tumor']['clinical'].set_index('bcr_patient_barcode')
 
     data['tumor']['ductal_patients'] = data['tumor']['clinical'].index[
         data['tumor']['clinical']['in_analysis_dataset'] & data['tumor']['clinical']['in_CpG_dataset']
@@ -123,9 +123,8 @@ def gen_CpG_set(data, neutral_DNA_CpG_list, only_ductals=False, n_select=500):
     
     data['normal']['beta_values_SELECTION'] = data['normal']['beta_values']
     if only_ductals:
-        sampleIDtoPatientID = lambda x:'-'.join(x.split('-')[:-1])
-#         ductal_bool = data['tumor']['beta_values_CpG_SELECTION'].columns.to_series().apply(sampleIDtoPatientID).isin(data['tumor']['ductal_patients'])
-        ductal_bool = data['tumor']['beta_values'].columns.to_series().apply(sampleIDtoPatientID).isin(data['tumor']['ductal_patients'])
+#         ductal_bool = data['tumor']['beta_values_CpG_SELECTION'].columns.to_series().apply(consts['sampleIDtoPatientID']).isin(data['tumor']['ductal_patients'])
+        ductal_bool = data['tumor']['beta_values'].columns.to_series().apply(consts['sampleIDtoPatientID']).isin(data['tumor']['ductal_patients'])
         data['tumor']['beta_values_SELECTION'] = data['tumor']['beta_values'].loc[:, ductal_bool]
     else:
         data['tumor']['beta_values_SELECTION'] = data['tumor']['beta_values']

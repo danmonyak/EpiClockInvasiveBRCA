@@ -44,14 +44,7 @@ def TCGA_clinical():
     
     clinical = pd.read_table(os.path.join(TCGA_datadir, 'cohort1.clinical.tsv'), index_col=0, na_values="'--")
     
-    clinical = clinical.loc[:, clinical.isna().mean(axis=0) < .9]
-    clinical = clinical.loc[:, ~clinical.columns.isin(['treatment_or_therapy', 'treatment_type', 
-                              'tumor_grade', 'classification_of_tumor', 'last_known_disease_status', 'prior_malignancy', 'prior_treatment', 'progression_or_recurrence', 'site_of_resection_or_biopsy', 'synchronous_malignancy',
-                              'case_submitter_id', 'project_id', 'ethnicity', 'days_to_birth', 'icd_10_code', 'tissue_or_organ_of_origin'])]
-    clinical = clinical.drop_duplicates()
-    assert not clinical.index.duplicated().any()
-    
-    clinical = clinical.loc[~clinical['ajcc_pathologic_t'].isna()]
+#     clinical = clinical.loc[~clinical['ajcc_pathologic_t'].isna()]
     
     ajcc_pathologic_t = clinical['ajcc_pathologic_t'].apply(lambda x:x[:2])
     ajcc_pathologic_stage = clinical['ajcc_pathologic_stage'].str.rstrip('ABC')
@@ -59,6 +52,6 @@ def TCGA_clinical():
     clinical = clinical.drop(['ajcc_pathologic_t', 'ajcc_pathologic_stage'], axis=1)
     clinical['ajcc_pathologic_t'] = ajcc_pathologic_t
     clinical['ajcc_pathologic_stage'] = ajcc_pathologic_stage
-    
-    clinical.to_csv(os.path.join(TCGA_datadir, 'cohort1.clinical.cleaned.tsv'), sep='\t')
+    return clinical
+#     clinical.to_csv(os.path.join(TCGA_datadir, 'cohort1.clinical.cleaned.tsv'), sep='\t')
 
