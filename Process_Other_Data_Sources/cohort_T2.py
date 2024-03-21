@@ -18,7 +18,7 @@ TAX_to_GSM_mapping = pd.read_table(os.path.join(proj_dir, 'TAX_to_GSM_mapping.tx
 # Clinical file
 GSE75067_clinical = pd.read_table(os.path.join(proj_dir, 'GSE75067_sample_annotations.txt'), index_col=0)
 clinical = GSE75067_clinical.reset_index().merge(TAX_to_GSM_mapping, left_on='Title', right_index=True).set_index('GSM')
-clinical['grade'] = clinical['grade'].map({1:'1', 2:'2', 3:'3'})
+clinical['grade'] = clinical['grade'].map({1:'1', 2:'2', 3:'3'}).fillna(value='None')
 ###################
 
 print('Loading beta values, should take <3 minutes...')
@@ -48,10 +48,9 @@ clinical.to_csv(os.path.join(proj_dir, 'cohort.T2.clinical.txt'), sep='\t')
 print('Saved modified clinical file.')
 
 # Calculate and save c_beta values for each tumor
-balanced_CpGs = np.loadtxt(os.path.join(consts['repo_dir'], 'Select_fCpGs', 'outputs', 'balanced_CpGs_final_set.txt'), dtype=str)
+balanced_CpGs = np.loadtxt(os.path.join(consts['repo_dir'], 'Select_fCpGs', 'outputs', 'balanced_CpGs.txt'), dtype=str)
 c_beta = 1 - beta_values.loc[balanced_CpGs, clinical.index[clinical['in_analysis_dataset']]].std(axis=0)
 c_beta.name = 'c_beta'
 c_beta.to_csv(os.path.join(output_dir, 'cohort.T2.c_beta.txt'), sep='\t')
-
 
 print('Saved c_beta value of each tumor.')

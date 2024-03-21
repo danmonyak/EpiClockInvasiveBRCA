@@ -39,19 +39,3 @@ def chip450_850():
     chip450_info.to_csv(os.path.join(consts['official_indir'], 'TCGA', 'chip450_annot_cleaned.txt'), sep='\t')
     chip850_info.to_csv(os.path.join(consts['official_indir'], 'TCGA', 'chip850_annot_cleaned.txt'), sep='\t')
 
-def TCGA_clinical():
-    TCGA_datadir = os.path.join(consts['official_indir'], 'TCGA')
-    
-    clinical = pd.read_table(os.path.join(TCGA_datadir, 'cohort1.clinical.tsv'), index_col=0, na_values="'--")
-    
-#     clinical = clinical.loc[~clinical['ajcc_pathologic_t'].isna()]
-    
-    ajcc_pathologic_t = clinical['ajcc_pathologic_t'].apply(lambda x:x[:2])
-    ajcc_pathologic_stage = clinical['ajcc_pathologic_stage'].str.rstrip('ABC')
-    
-    clinical = clinical.drop(['ajcc_pathologic_t', 'ajcc_pathologic_stage'], axis=1)
-    clinical['ajcc_pathologic_t'] = ajcc_pathologic_t
-    clinical['ajcc_pathologic_stage'] = ajcc_pathologic_stage
-    return clinical
-#     clinical.to_csv(os.path.join(TCGA_datadir, 'cohort1.clinical.cleaned.tsv'), sep='\t')
-
