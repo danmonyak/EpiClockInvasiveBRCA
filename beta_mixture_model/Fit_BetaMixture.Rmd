@@ -1,0 +1,156 @@
+---
+title: "Beta Mixture Model"
+author: "Shannon T. Holloway"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    code_folding: "hide"
+params:
+  cloud_path: "~/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/"
+  data_dir: "MolClock_Paper_1/1. Analytic Datasets/TCGA/"
+  data_dir_ringner: "MolClock_Paper_1/1. Analytic Datasets/Ringner/"
+  working_dir: "~/Desktop/FromDesktop_2bsorted/cibersort/"
+  methyl_filename: "cohort1.methyl"
+  clinical_filename: "cohort1.clinical"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("~/Desktop/FromDesktop_2bsorted/cibersort/R_codes/my_BetaMixture.R")
+library(ggsci)
+library(ggplot2)
+```
+
+```{r retrieve_CpG_site}
+cpg_sites <- read.csv(paste0(params$working_dir, "balanced_CpGs_final_set.txt"),
+                      header = FALSE)[, 1L]
+```
+
+## TCGA
+
+# Beta Peak Locations {.tabset}
+
+We have decided to use the BetaMixture tool and will show results only for the
+measured beta.
+
+<span style="color:red">Missing values are a problem for the clustering algorithm.
+Fitting without these sites for now.</span>
+
+<span style="color:red">0's and 1' are a problem for the clustering algorithm.
+Removing those sites.</span>
+
+## BetaMixture
+
+Package available on R-Forge. Required modification of a testing criteria
+to avoid floating point issue (`sum(x) == 1` vs `isTRUE(all.equal(sum(x), 1.0))`)
+
+```{r TCGA_beta_mixture_model}
+betaMixture_TCGA <- tryCatch(readRDS(paste0(params$cloud_path, params$data_dir,
+                                            "tcga_beta_mixture_model.rds")),
+                             error = function(e) { NULL })
+
+
+if (is.null(betaMixture_TCGA)) {
+  TCGA_clinical <- readRDS(paste0(params$cloud_path, params$data_dir,
+                                  params$clinical_filename, ".rds"))
+  
+  analysis_tumors <- TCGA_clinical$in_analysis_dataset
+  
+  brca.methyl <- readRDS(paste0(params$cloud_path, params$data_dir,
+                                params$methyl_filename, ".rds"))
+  keep <- substr(colnames(brca.methyl), 1, 12L) %in% TCGA_clinical$submitter_id[analysis_tumors]
+  
+  brca.methyl <- brca.methyl[, keep]
+  
+  # we are fitting only the 500 CpG sites
+  brca.methyl <- brca.methyl[rownames(brca.methyl) %in% cpg_sites, ]
+
+  alpha <- matrix(0.0, ncol(brca.methyl), 3L)
+  delta <- matrix(0.0, ncol(brca.methyl), 3L)
+  z <- list()
+  track_number_removed_TCGA <- numeric(ncol(brca.methyl))
+  for (i in 1L:ncol(brca.methyl)) {
+    
+    are_na <- is.na(brca.methyl[, i])
+    rm_extremes <- !are_na & {brca.methyl[, i] <= 0.98 & brca.methyl[, i] >= 0.02}
+    track_number_removed_TCGA[i] <- sum(!rm_extremes)
+    
+    res <- tryCatch(suppressWarnings(BetaMixture_my(brca.methyl[rm_extremes, i], K = 3, 
+                                                    forever = 1500,
+                                                    debug = FALSE,
+                                                    epsilon = 1e-3, 
+                                                    relative = 1e-3)),
+                    error = function(e) {
+                      message(i, " ", sum(is.na(brca.methyl[, i])), " ", e$message)
+                      stop("T")
+                      })
+    
+    if (is.null(res)) next
+    if (!res@converged) {
+      message(i, " ", res@converged)
+    }
+    alpha[i, ] <- res@mle[1L, ]
+    delta[i, ] <- res@mle[2L, ]
+    z[[i]] <- res@Z
+  }
+  
+  saveRDS(list(alpha = alpha, delta = delta, Z = z), 
+          file = paste0(params$cloud_path, params$data_dir,
+                        "tcga_beta_mixture_model.rds"))
+  
+  print(table(track_number_removed_TCGA))
+}
+```
+
+## Ringner Data
+
+```{r get_ringner_data}
+ringner.methyl <- read.csv(paste0(params$cloud_path, params$data_dir_ringner, 
+                                  "beta_values_FULL_balanced_CpGs.txt"), sep = "\t")
+rownames(ringner.methyl) <- ringner.methyl[, 1L]
+ringner.methyl <- ringner.methyl[, -1L]
+```
+
+```{r Ringner_beta_mixture_model}
+betaMixture_Ringner<- tryCatch(readRDS(paste0(params$cloud_path, params$data_dir_ringner,
+                                              "ringner_beta_mixture_model.rds")),
+                               error = function(e) { NULL })
+
+if (is.null(betaMixture_Ringner)) {
+  
+  alpha <- matrix(0.0, ncol(ringner.methyl), 3L)
+  delta <- matrix(0.0, ncol(ringner.methyl), 3L)
+  z <- list()
+  track_number_removed_Ringner <- numeric(ncol(ringner.methyl))
+  for (i in 1L:ncol(ringner.methyl)) {
+    
+    are_na <- is.na(ringner.methyl[, i])
+    rm_extremes <- !are_na & {ringner.methyl[, i] <= 0.98 & ringner.methyl[, i] >= 0.02}
+    track_number_removed_Ringner[i] <- sum(!rm_extremes)
+    
+    res <- tryCatch(suppressWarnings(BetaMixture_my(ringner.methyl[rm_extremes, ], K = 3, 
+                                                    forever = 1500,
+                                                    debug = FALSE,
+                                                    epsilon = 1e-3, 
+                                                    relative = 1e-3)),
+                    error = function(e) {
+                      message(i, " ", sum(is.na(ringner.methyl[, i])), " ", e$message)
+                      stop("T")
+                    })
+  
+    if (is.null(res)) next
+    if (!res@converged) {
+      message(i, " ", res@converged)
+    }
+    alpha[i, ] <- res@mle[1L, ]
+    delta[i, ] <- res@mle[2L, ]
+    z[[i]] <- res@Z
+  }
+  
+  saveRDS(list(alpha = alpha, delta = delta, Z = z), 
+          file = paste0(params$cloud_path, params$data_dir,
+                        "ringner_beta_mixture_model.rds"))
+  
+  print(table(track_number_removed_Ringner))
+}
+```
