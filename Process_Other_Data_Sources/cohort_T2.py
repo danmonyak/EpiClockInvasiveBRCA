@@ -38,6 +38,7 @@ if not os.path.exists(output_dir):
 # Remove impure tumors from beta_values
 LUMP_purity = m_util.getLUMP_values(beta_values)
 clinical['in_CpG_dataset'] = clinical.index.isin(LUMP_purity.index[LUMP_purity >= LUMP_THRESH])
+clinical['LUMP'] = LUMP_purity         # need to add in LUMP column also - extra change
 clinical['reason_purity'] = ~clinical['in_CpG_dataset']
 beta_values = beta_values[clinical.index[clinical['in_CpG_dataset']]]
 
