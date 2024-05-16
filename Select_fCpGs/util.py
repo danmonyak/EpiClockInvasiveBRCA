@@ -98,17 +98,19 @@ def getDataDict():
     
 #     # Get purity values of remaining tumors/normals
 #     data['tumor']['purity'] = purityEstimates.loc[data['tumor']['beta_values'].columns, 'CPE']
-#     data['normal']['purity'] = m_util.getLUMP_values(data['normal']['beta_values'])
-
-#     for sample in ['tumor', 'normal']:
-#         data[sample]['pureSamples'] = data[sample]['purity'].index[data[sample]['purity'] >= data[sample]['purity_threshold']].values
+    data['normal']['purity'] = m_util.getLUMP_values(data['normal']['beta_values'])
+    data['normal']['pureSamples'] = data['normal']['purity'].index[
+        data['normal']['purity'] >= consts['lump_threshold']('Johnson')
+    ].values
+    
+    data['tumor']['pureSamples'] = data['tumor']['beta_values'].columns.values
     
     return data
 
 def addMeanStdsNans(data):
     for sample in ['tumor', 'normal']:
-#         if 'beta_values_CpG_SELECTION' not in data[sample]:
-# #             data[sample]['beta_values_PURE'] = data[sample]['beta_values'][data[sample]['pureSamples']]
+        if 'beta_values_SELECTION' not in data[sample]:
+            data[sample]['beta_values_SELECTION'] = data[sample]['beta_values'][data[sample]['pureSamples']]
 
             
 #         data[sample]['beta_means'] = data[sample]['beta_values_CpG_SELECTION'].mean(axis=1)
@@ -120,10 +122,8 @@ def addMeanStdsNans(data):
         data[sample]['beta_nans'] = data[sample]['beta_values_SELECTION'].isna().sum(axis=1)
 
 def gen_CpG_set(data, neutral_DNA_CpG_list, only_ductals=False, n_select=500):
-#     for sample in ['tumor', 'normal']:
-# #         data[sample]['beta_values_PURE'] = data[sample]['beta_values'][data[sample]['pureSamples']]
     
-    data['normal']['beta_values_SELECTION'] = data['normal']['beta_values']
+    data['normal']['beta_values_SELECTION'] = data['normal']['beta_values'][data['normal']['pureSamples']]
     if only_ductals:
 #         ductal_bool = data['tumor']['beta_values_CpG_SELECTION'].columns.to_series().apply(consts['sampleIDtoPatientID']).isin(data['tumor']['ductal_patients'])
         ductal_bool = data['tumor']['beta_values'].columns.to_series().apply(consts['sampleIDtoPatientID']).isin(data['tumor']['ductal_patients'])
