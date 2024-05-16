@@ -49,7 +49,7 @@ clinical['in_CpG_dataset'] &= ~clinical['reason_primary']
 print(f'{clinical["reason_primary"].sum()} tumors removed for not being primary tumors')
 
 filt = clinical.loc[clinical['in_CpG_dataset']]
-clinical = clinical.merge(filt['age'].duplicated().rename('reason_duplicate'), left_index=True, right_index=True)
+clinical = clinical.merge(filt['age'].duplicated().rename('reason_duplicate'), left_index=True, right_index=True, how='left')
 clinical['reason_duplicate'] = clinical['reason_duplicate'].fillna(False)
 clinical['in_CpG_dataset'] &= ~clinical['reason_duplicate']
 print(f'{clinical["reason_duplicate"].sum()} tumors removed for being from the same patient as a previous one.')
