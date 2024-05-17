@@ -23,13 +23,14 @@ BALANCED_CRITERIA = {
 
 def getNeutralDNACpGs():
     TCGA_datadir = os.path.join(consts['official_indir'], 'TCGA')
+    chip_annot_dir = os.path.join(TCGA_datadir, 'chip_annots')
     
-    chip450_info = pd.read_table(os.path.join(TCGA_datadir, 'chip450_annot_cleaned.txt'), index_col=0, low_memory=False)
-    chip850_info = pd.read_table(os.path.join(TCGA_datadir, 'chip850_annot_cleaned.txt'), index_col=0, low_memory=False)
+    chip450_info = pd.read_table(os.path.join(chip_annot_dir, 'chip450_annot_cleaned.txt'), index_col=0, low_memory=False)
+    chip850_info = pd.read_table(os.path.join(chip_annot_dir, 'chip850_annot_cleaned.txt'), index_col=0, low_memory=False)
     
     neutral_filters = [
-        chip450_info['Regulatory_Feature_Group'] == 'None',
-        ~chip450_info['HAS_geneName'],
+        chip450_info['Regulatory_Feature_Group'].isna(),
+        chip450_info['UCSC_RefGene_Name'].isna(),
         chip850_info['Regulatory_Feature_Group'].isna(),
         chip850_info['UCSC_RefGene_Name'].isna(),
     ]
@@ -39,10 +40,9 @@ def getNeutralDNACpGs():
     ## Sanity checks - IMPORTANT - experienced weird errors before with selecting CpGs that did not fit the criteria...
     neutral_chip450_info = chip450_info.loc[neutral_DNA_CpG_list]
     neutral_chip850_info = chip850_info.loc[neutral_DNA_CpG_list]
-#     assert (neutral_chip450_info['Regulatory_Feature_Group'].isna()).all()
-    assert (neutral_chip450_info['Regulatory_Feature_Group'] == 'None').all()
-
-    assert (~neutral_chip450_info['HAS_geneName']).all()
+    
+    assert neutral_chip450_info['Regulatory_Feature_Group'].isna().all()
+    assert neutral_chip450_info['UCSC_RefGene_Name'].isna().all()
     assert neutral_chip850_info['Regulatory_Feature_Group'].isna().all()
     assert neutral_chip850_info['UCSC_RefGene_Name'].isna().all()
 
