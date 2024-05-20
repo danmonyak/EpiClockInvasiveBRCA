@@ -5,11 +5,9 @@ from math import ceil
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import linregress, ranksums
-from MolecularClocks.src.invasiveCpGs_consts import getConsts
-sampleToPatientID = lambda x: '-'.join(x.split('-')[:3])
-from MolecularClocks.src.invasiveCpGs_consts import getConsts
+from EpiClockInvasiveBRCA.src.consts import consts
 
-consts = getConsts()
+sampleToPatientID = lambda x: '-'.join(x.split('-')[:3])
 
 def combineFilters(filters):
     return list(accumulate(filters, lambda x,y:x&y))[-1]
@@ -31,7 +29,7 @@ def wilcoxonRankSums(ser1, ser2, get_n_used=False):
         return res
 
 def saveBoxPlotNew(sample_annotations, var_cat, var_y='c_beta', restrict=True, use_groups=None,
-                outdir=os.path.join(consts['indir'], 'evidence', 'clinical', 'TCGA', 'boxplots'), outfile=True,
+                outdir='.', outfile=True,
                 starting_mask=None, title=False, title_name=None, dataset='', xlabel=None, palette=None,
                 label=None, plot_vertical=True,
                 plot_ymax_mult=0.25, n_samples_label_text=0.15, n_samples_text=0.05,
@@ -165,7 +163,7 @@ def getCpG_list(data, criteria, starting_CpG_list=None, n_select=None, sample_ra
     return data[sample_rank][stat_rank].loc[criteria_CpGs].sort_values(ascending=(good_end == 'lower')).index[:n_select].values
 
 
-lump_CpGs = np.loadtxt(os.path.join(consts['indir'], 'misc', 'lump-CpGs-44.txt'), dtype=str)
+lump_CpGs = np.loadtxt(os.path.join(consts['official_indir'], 'misc', 'lump-CpGs-44.txt'), dtype=str)
 def getLUMP_values(beta_values):
     raw_LUMPs = (beta_values.loc[lump_CpGs].mean(axis=0) / 0.85).to_frame()
     raw_LUMPs[1] = 1
@@ -183,7 +181,7 @@ def getCorrelation(sample_annotations, var_x, var_y='methStdev', only_pure=False
     return pearsonCorrelation(ser1, ser2, get_n_used)
 
 def saveCorrelationPlot(sample_annotations, var_y, var_x='c_beta', restrict=True, use_samples=None,
-                        outdir=os.path.join(consts['indir'], 'evidence', 'clinical', 'ringner', 'correlation'), outfile=True,
+                        outdir='.', outfile=True,
                         text_x=0, text_y=0,
                         dataset='', scatter_kws={}, line_kws={}, label=None, bbox_dict=None, color='blue',
                        figsize=(10, 10), labelfontsize=20, ticksfontsize=10, s=1, sf=1):

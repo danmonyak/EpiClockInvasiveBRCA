@@ -53,7 +53,7 @@ def getDataDict():
     # Importing data could take a few minutes once file is downloaded (if on an external file source)
     data = {'tumor':{}, 'normal':{}}
     data['tumor']['beta_values'] = pd.read_table(os.path.join(TCGA_datadir, 'cohort1.methyl.tsv'), index_col=0)
-    data['normal']['beta_values'] = consts['project_data_func_dict']['Johnson']['all']()
+    data['normal']['beta_values'] = pd.read_table(os.path.join(consts['official_indir'], 'Johnson', 'johnson-beta_values.txt'), index_col=0)
 
     # CpG Sites are the same in each DF
     idx_tumor = data['tumor']['beta_values'].index
@@ -80,29 +80,14 @@ def getDataDict():
     
     print(f"Selecting CpGs with {data['tumor']['beta_values'].shape[1]} tumors")
     
-#     # Import purity estimates
-#     # purityEstimates = consts['purityEstimates']()
-#     purityEstimates = pd.read_csv(os.path.join(TCGA_datadir, 'ncomms9971-s2.csv'), index_col=0)
-
-#     # Remove duplicate tumors and those without a purity estimate
-    
-#     duplicated_bool = data['tumor']['beta_values'].columns.duplicated(keep=False)
-#     print(f'Removing {duplicated_bool.sum()} tumors for not being from unique patients')
-#     print(data['tumor']['beta_values'].columns[duplicated_bool])
-#     data['tumor']['beta_values'] = data['tumor']['beta_values'].loc[:, ~duplicated_bool]
-
-#     noPurity_bool = ~data['tumor']['beta_values'].columns.isin(purityEstimates.index)
-#     print(f'Removing {noPurity_bool.sum()} tumors for not having a purity estimate')
-#     print(data['tumor']['beta_values'].columns[noPurity_bool])
-#     data['tumor']['beta_values'] = data['tumor']['beta_values'].loc[:, ~noPurity_bool]
-    
-#     # Get purity values of remaining tumors/normals
-#     data['tumor']['purity'] = purityEstimates.loc[data['tumor']['beta_values'].columns, 'CPE']
+    # Get pure samples for normals
+    # Filter by lump value
     data['normal']['purity'] = epi_util.getLUMP_values(data['normal']['beta_values'])
     data['normal']['pureSamples'] = data['normal']['purity'].index[
         data['normal']['purity'] >= consts['lump_threshold']('Johnson')
     ].values
     
+    # All TCGA samples have already been filtered for purity
     data['tumor']['pureSamples'] = data['tumor']['beta_values'].columns.values
     
     return data

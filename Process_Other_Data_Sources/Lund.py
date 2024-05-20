@@ -2,9 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 import EpiClockInvasiveBRCA.src.util as epi_util
-from MolecularClocks.src.invasiveCpGs_consts import getConsts
-
-consts = getConsts()
+from EpiClockInvasiveBRCA.src.consts import consts
 
 # LUMP threshold for this dataset
 LUMP_THRESH = 0.6

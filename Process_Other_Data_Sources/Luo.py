@@ -1,8 +1,6 @@
 import pandas as pd
 import os
-from MolecularClocks.src.invasiveCpGs_consts import getConsts
-
-consts = getConsts()
+from EpiClockInvasiveBRCA.src.consts import consts
 
 # Indir of data
 proj_dir = os.path.join(consts['official_indir'], 'Luo')
