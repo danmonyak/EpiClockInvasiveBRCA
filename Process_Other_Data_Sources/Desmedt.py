@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
-import MolecularClocks.src.methylation_util as m_util
+import EpiClockInvasiveBRCA.src.util as epi_util
 from MolecularClocks.src.invasiveCpGs_consts import getConsts
 consts = getConsts()
 
@@ -41,7 +41,7 @@ LUMP_THRESH = 0.6
 
 beta_values = pd.read_table(os.path.join(proj_dir, 'beta_values.txt'), index_col=0)
 
-LUMP_purity = m_util.getLUMP_values(beta_values)
+LUMP_purity = epi_util.getLUMP_values(beta_values)
 pureSamples = LUMP_purity.index[LUMP_purity >= LUMP_THRESH].to_numpy()
 # np.savetxt(os.path.join(proj_dir, 'pureSamples.txt'), pureSamples, fmt='%s')
 

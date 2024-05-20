@@ -3,8 +3,8 @@ import numpy as np
 import os
 import sys
 from MolecularClocks.src.invasiveCpGs_consts import getConsts
-from MolecularClocks.src.util import combineFilters
-import MolecularClocks.src.methylation_util as m_util
+from EpiClockInvasiveBRCA.src.util import combineFilters
+import EpiClockInvasiveBRCA.src.util as epi_util
 
 consts = getConsts()
 TCGA_datadir = os.path.join(consts['official_indir'], 'TCGA')
@@ -98,7 +98,7 @@ def getDataDict():
     
 #     # Get purity values of remaining tumors/normals
 #     data['tumor']['purity'] = purityEstimates.loc[data['tumor']['beta_values'].columns, 'CPE']
-    data['normal']['purity'] = m_util.getLUMP_values(data['normal']['beta_values'])
+    data['normal']['purity'] = epi_util.getLUMP_values(data['normal']['beta_values'])
     data['normal']['pureSamples'] = data['normal']['purity'].index[
         data['normal']['purity'] >= consts['lump_threshold']('Johnson')
     ].values
@@ -138,6 +138,6 @@ def gen_CpG_set(data, neutral_DNA_CpG_list, only_ductals=False, n_select=500):
     
     if 'allCpGs' not in data:
         data['allCpGs'] = data['tumor']['beta_values'].index.values
-    balanced_CpGs = m_util.getCpG_list(data, BALANCED_CRITERIA, starting_CpG_list=neutral_DNA_CpG_list, n_select=n_select)
+    balanced_CpGs = epi_util.getCpG_list(data, BALANCED_CRITERIA, starting_CpG_list=neutral_DNA_CpG_list, n_select=n_select)
     
     return balanced_CpGs

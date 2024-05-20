@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
-import MolecularClocks.src.methylation_util as m_util
+import EpiClockInvasiveBRCA.src.util as epi_util
 from MolecularClocks.src.invasiveCpGs_consts import getConsts
 
 consts = getConsts()
@@ -38,7 +38,7 @@ print(f'{clinical.shape[0]} tumors initially')
 # Filter by LUMP
 # Set in_CpG_dataset and reason_purity flags accordingly - based on LUMP value
 # Remove impure tumors from beta_values
-LUMP_purity = m_util.getLUMP_values(beta_values)
+LUMP_purity = epi_util.getLUMP_values(beta_values)
 clinical = clinical.merge(LUMP_purity.rename('LUMP'), left_index=True, right_index=True)
 clinical['reason_purity'] = clinical['LUMP'] < LUMP_THRESH
 clinical['in_CpG_dataset'] = ~clinical['reason_purity']
