@@ -44,6 +44,8 @@ LUMP_purity = epi_util.getLUMP_values(beta_values)
 pureSamples = LUMP_purity.index[LUMP_purity >= LUMP_THRESH].to_numpy()
 # np.savetxt(os.path.join(proj_dir, 'pureSamples.txt'), pureSamples, fmt='%s')
 
+print(LUMP_purity)
+
 balanced_CpGs = np.loadtxt(os.path.join(consts['repo_dir'], 'Select_fCpGs', 'outputs', 'balanced_CpGs.txt'), dtype=str)
 
 beta_values_balanced_CpGs_pureSamples = beta_values.loc[balanced_CpGs, pureSamples]

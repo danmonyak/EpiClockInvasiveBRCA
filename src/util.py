@@ -1,13 +1,28 @@
+"""
+util.py
+=======
+Author - Daniel Monyak
+6-7-24
+=======
+
+
+Provides
+    Hasdfadf
+
+"""
+
 import numpy as np
 import pandas as pd
 import os
-from math import ceil
+from math import ceil, isnan
+from itertools import product, accumulate
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import linregress, ranksums
 from EpiClockInvasiveBRCA.src.consts import consts
 
 sampleToPatientID = lambda x: '-'.join(x.split('-')[:3])
+isNaVec = np.vectorize(lambda x:(x is None) or ((type(x) is not str) and isnan(x)))
 
 def combineFilters(filters):
     return list(accumulate(filters, lambda x,y:x&y))[-1]
@@ -30,9 +45,9 @@ def wilcoxonRankSums(ser1, ser2, get_n_used=False):
 
 def saveBoxPlotNew(sample_annotations, var_cat, var_y='c_beta', restrict=True, use_groups=None,
                 outdir='.', outfile=True,
-                starting_mask=None, title=False, title_name=None, dataset='', xlabel=None, palette=None,
+                starting_mask=None, title=False, title_name=None, dataset='', xlabel=None, ylabel=None, palette=None,
                 label=None, plot_vertical=True,
-                plot_ymax_mult=0.25, n_samples_label_text=0.15, n_samples_text=0.05,
+                plot_ymax_mult=0.25, signif_bar_heights=0.03, n_samples_label_text=0.15, n_samples_text=0.05,
                    signif_fontsize=14,
                    figsize=(10, 10), labelfontsize=20, ticksfontsize=10, linewidth=1, fliersize=1, sf=1):
     if use_groups is None:
@@ -61,18 +76,20 @@ def saveBoxPlotNew(sample_annotations, var_cat, var_y='c_beta', restrict=True, u
 
     if var_y == 'c_beta':
         ax.set_ylabel('$c_β$', fontsize=labelfontsize * sf)
+    elif ylabel is not None:
+        ax.set_ylabel(ylabel, fontsize=labelfontsize * sf)
+        
 
     ax.tick_params(axis='x', labelsize=labelfontsize * sf, width=sf, length=8 * sf)
     ax.tick_params(axis='y', labelsize=ticksfontsize * sf, width=sf, length=8 * sf)
 #     ax.tick_params(bottom=False)
     ax.set_xticks(ax.get_xticks(),
-                  [group + f'\n(n = {(plot_data[var_cat] == group).sum()})' for group in use_groups])
+                  [group + f'\n(n = {(~(plot_data[var_y].isna()) & (plot_data[var_cat] == group)).sum()})' for group in use_groups])
     
         
     if title:
         if label is None:
             ax.set_title(sample_annotations.name, fontsize=labelfontsize * sf)
-#             ax.set_title(f'{" ".join(var_cat.split("_")).capitalize()} ({sample_annotations.name})', fontsize=labelfontsize * sf)
         else:
             ax.set_title(f'{label} ({sample_annotations.name})', fontsize=labelfontsize * sf)
         ax.set_xlabel('', fontsize=labelfontsize * sf)
@@ -85,8 +102,6 @@ def saveBoxPlotNew(sample_annotations, var_cat, var_y='c_beta', restrict=True, u
 
     # Check from the outside pairs of boxes inwards
     ls = list(range(1, len(use_groups) + 1))
-    # combinations = [(ls[x], ls[x + y]) for y in reversed(ls) for x in range((len(ls) - y))]
-#     ls = list(range(len(use_groups)))
     combinations = [(ls[x], ls[x + y]) for y in reversed(ls) for x in range((len(ls) - y))]
 
     significant_combinations = []
@@ -116,8 +131,7 @@ def saveBoxPlotNew(sample_annotations, var_cat, var_y='c_beta', restrict=True, u
         # What level is this bar among the bars above the plot?
         level = len(significant_combinations) - i
         # Plot the bar
-    #     bar_height = (y_range * 1e-9 * level) + top
-        bar_height = max_y + (.03 * level)
+        bar_height = max_y + (signif_bar_heights * level)
 
         bar_tips = bar_height - (y_range * 0.02)
         ax.plot(
@@ -141,31 +155,12 @@ def saveBoxPlotNew(sample_annotations, var_cat, var_y='c_beta', restrict=True, u
 
     return ax
 
-
-def getCpG_list(data, criteria, starting_CpG_list=None, n_select=None, sample_rank='tumor', stat_rank='beta_stds', good_end='higher'):
-    if 'allCpGs' not in data:
-        data['allCpGs'] = data['tumor']['beta_values'].index.values
-    if starting_CpG_list is None:
-        starting_CpG_list = data['allCpGs']
-    
-    siteFilters = []
-    for sample in criteria.keys():
-        samp_criteria = criteria[sample]
-        for stat in samp_criteria.keys():
-            siteFilters.append(data[sample][stat] >= samp_criteria[stat][0])
-            siteFilters.append(data[sample][stat] <= samp_criteria[stat][1])
-        
-    combined_filter = combineFilters(siteFilters)
-    criteria_CpGs = np.intersect1d(data['allCpGs'][combined_filter], starting_CpG_list)
-    if n_select is None:
-        return criteria_CpGs
-    
-    return data[sample_rank][stat_rank].loc[criteria_CpGs].sort_values(ascending=(good_end == 'lower')).index[:n_select].values
-
-
 lump_CpGs = np.loadtxt(os.path.join(consts['official_indir'], 'misc', 'lump-CpGs-44.txt'), dtype=str)
 def getLUMP_values(beta_values):
-    raw_LUMPs = (beta_values.loc[lump_CpGs].mean(axis=0) / 0.85).to_frame()
+    included_lump = np.intersect1d(lump_CpGs, beta_values.index)
+    if included_lump.shape[0] != lump_CpGs.shape[0]:
+        print(f'Only {included_lump.shape[0]} LUMP sites were available...')
+    raw_LUMPs = (beta_values.loc[included_lump].mean(axis=0) / 0.85).to_frame()
     raw_LUMPs[1] = 1
     return raw_LUMPs.min(axis=1)
 
@@ -274,7 +269,7 @@ def plotTumorWise(data, CpG_list=None, sample_type='tumor', sample_list=None, n_
         if title_formats is None:
             title += samp
         else:
-            title = title_formats[i].format(sampleToPatientID(samp))
+            title = title_formats[i].format(samp)
         
         if sample_type == 'normal':
             title += f', age = {age_mapper[samp]}'

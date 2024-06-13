@@ -1,12 +1,15 @@
-###
-###
-###
-###
-###
-###
-###
-###
-###
+"""
+consts.py
+=======
+Author - Daniel Monyak
+6-7-24
+=======
+
+
+Provides
+    Directories and variables used by other notebooks and source files
+
+"""
 
 import os
 import sys
@@ -21,7 +24,7 @@ if labdir is None:
 #! Set to directory with data
 consts['official_indir'] = os.path.join(os.getenv("HOME"), 'Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets')
 consts['repo_dir'] = os.path.join(labdir, 'EpiClockInvasiveBRCA')
-
+consts['TCGA_datadir'] = os.path.join(consts['official_indir'], 'TCGA')
 
 
 consts['lump_threshold_dict'] = {
