@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import random
 
-MAX_CELLS = int(1e8)
+MAX_CELLS = int(1e10)
 
 class Ensemble:
     def __init__(self, init_params, gen):
