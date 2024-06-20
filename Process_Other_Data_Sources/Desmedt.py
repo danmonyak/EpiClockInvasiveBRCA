@@ -45,6 +45,7 @@ pureSamples = LUMP_purity.index[LUMP_purity >= LUMP_THRESH].to_numpy()
 # np.savetxt(os.path.join(proj_dir, 'pureSamples.txt'), pureSamples, fmt='%s')
 
 print(LUMP_purity)
+LUMP_purity.to_csv(os.path.join(proj_dir, 'LUMP_purity.txt'), sep='\t')
 
 balanced_CpGs = np.loadtxt(os.path.join(consts['repo_dir'], 'Select_fCpGs', 'outputs', 'balanced_CpGs.txt'), dtype=str)
 

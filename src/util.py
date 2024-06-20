@@ -35,13 +35,16 @@ def pearsonCorrelation(ser1, ser2, get_n_used=False):
     else:
         return res
 
-def wilcoxonRankSums(ser1, ser2, get_n_used=False):
-    use_mask = ~(ser1.isna() | ser2.isna())
-    res = ranksums(ser1[use_mask], ser2[use_mask])
-    if get_n_used:
-        return res, use_mask.sum()
-    else:
-        return res
+# def wilcoxonRankSums(ser1, ser2, get_n_used=False):
+#     use_mask = ~(ser1.isna() | ser2.isna())
+#     res = ranksums(ser1[use_mask], ser2[use_mask])
+#     if get_n_used:
+#         return res, use_mask.sum()
+#     else:
+#         return res
+    
+def wilcoxonRankSums(ser1, ser2):
+    return ranksums(ser1.dropna(), ser2.dropna())
 
 def saveBoxPlotNew(sample_annotations, var_cat, var_y='c_beta', restrict=True, use_groups=None,
                 outdir='.', outfile=True,

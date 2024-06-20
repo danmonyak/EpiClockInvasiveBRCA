@@ -97,12 +97,11 @@ def getDataDict():
     # Check that CpG Sites are the same in each DF
     idx_tumor = np.sort(data['tumor']['beta_values'].index.values)
     idx_normal = np.sort(data['normal']['beta_values'].index.values)
-#     assert idx_tumor.isin(idx_normal).all()
-#     assert idx_normal.isin(idx_tumor).all()
     assert np.all(idx_tumor == idx_normal)
 
     # Use the same order of CpGs in the index
     data['allCpGs'] = idx_tumor
+    data['tumor']['beta_values'] = data['tumor']['beta_values'].loc[data['allCpGs']]
     data['normal']['beta_values'] = data['normal']['beta_values'].loc[data['allCpGs']]
 
     # Clip unnecessary accessions suffixes from sample IDs
