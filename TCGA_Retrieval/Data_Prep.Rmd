@@ -10,7 +10,7 @@ params:
   purity_file: "~/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/TCGA/ncomms9971-s2.csv"
   save_data: true
   save_data_as_rds: true
-  save_path: "~/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/TCGA/"
+  save_path: "~/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/TCGA_test/"
   GDCdata_dir: "gdc_data"
   rm_GDCdata_dir: false
   clinical_filename: "cohort1.clinical"

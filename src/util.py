@@ -22,6 +22,7 @@ from scipy.stats import linregress, ranksums
 from EpiClockInvasiveBRCA.src.consts import consts
 
 sampleToPatientID = lambda x: '-'.join(x.split('-')[:3])
+getSampleID = lambda x: '-'.join(x.split('-')[:4])
 isNaVec = np.vectorize(lambda x:(x is None) or ((type(x) is not str) and isnan(x)))
 
 def combineFilters(filters):
@@ -46,12 +47,29 @@ def pearsonCorrelation(ser1, ser2, get_n_used=False):
 def wilcoxonRankSums(ser1, ser2):
     return ranksums(ser1.dropna(), ser2.dropna())
 
+def getWilcoxonPvalueTable(sample_annotations, var_cat, var_y, use_groups=None):
+    if use_groups is None:
+        use_groups = sample_annotations[var_cat].unique()
+        
+    pvalue_df = pd.DataFrame(index=use_groups, columns=use_groups, data=float('nan'))
+
+    for i in range(len(use_groups)):
+        group_i = use_groups[i]
+        for j in range(i+1, len(use_groups)):
+            group_j = use_groups[j]
+            ser_i = sample_annotations.loc[sample_annotations[var_cat] == group_i, var_y]
+            ser_j = sample_annotations.loc[sample_annotations[var_cat] == group_j, var_y]
+            res = wilcoxonRankSums(ser_i, ser_j)
+            pvalue_df.loc[group_i, group_j] = res.pvalue
+
+    return pvalue_df
+
 def saveBoxPlotNew(sample_annotations, var_cat, var_y='c_beta', restrict=True, use_groups=None,
                 outdir='.', outfile=True,
-                starting_mask=None, title=False, title_name=None, dataset='', xlabel=None, ylabel=None, palette=None,
+                starting_mask=None, title=False, custom_title=None, dataset='', xlabel=None, ylabel=None, palette=None,
                 label=None, plot_vertical=True,
                 plot_ymax_mult=0.25, signif_bar_heights=0.03, n_samples_label_text=0.15, n_samples_text=0.05,
-                   signif_fontsize=14,
+                   signif_fontsize=14, ylim=None,
                    figsize=(10, 10), labelfontsize=20, ticksfontsize=10, linewidth=1, fliersize=1, sf=1):
     if use_groups is None:
         use_groups = sample_annotations[var_cat].unique()
@@ -62,8 +80,9 @@ def saveBoxPlotNew(sample_annotations, var_cat, var_y='c_beta', restrict=True, u
         use_samples_mask &= starting_mask
     if restrict:
         use_samples_mask &= sample_annotations['in_analysis_dataset']
-        outfile_name = f'{sample_annotations.name}-{var_cat}-{var_y}-pure.pdf'
-    else:
+        if outfile:
+            outfile_name = f'{sample_annotations.name}-{var_cat}-{var_y}-pure.pdf'
+    elif outfile:
         outfile_name = f'{sample_annotations.name}-{var_cat}-{var_y}.pdf'
 
     use_samples_mask &= ~sample_annotations[var_y].isna()
@@ -79,6 +98,8 @@ def saveBoxPlotNew(sample_annotations, var_cat, var_y='c_beta', restrict=True, u
 
     if var_y == 'c_beta':
         ax.set_ylabel('$c_β$', fontsize=labelfontsize * sf)
+    elif var_y == 'c_beta_adj1':
+        ax.set_ylabel('$c_β^a$', fontsize=labelfontsize * sf)
     elif ylabel is not None:
         ax.set_ylabel(ylabel, fontsize=labelfontsize * sf)
         
@@ -96,65 +117,69 @@ def saveBoxPlotNew(sample_annotations, var_cat, var_y='c_beta', restrict=True, u
         else:
             ax.set_title(f'{label} ({sample_annotations.name})', fontsize=labelfontsize * sf)
         ax.set_xlabel('', fontsize=labelfontsize * sf)
+    elif custom_title is not None:
+        ax.set_title(custom_title, fontsize=labelfontsize * sf)
     elif xlabel is not None:
         ax.set_xlabel(xlabel, fontsize=labelfontsize * sf)
 
-    max_y = plot_data[var_y].max()
-    min_y = plot_data[var_y].min()
-
-
-    # Check from the outside pairs of boxes inwards
-    ls = list(range(1, len(use_groups) + 1))
-    combinations = [(ls[x], ls[x + y]) for y in reversed(ls) for x in range((len(ls) - y))]
-
-    significant_combinations = []
-    for combo in combinations:
         
-        ser1 = plot_data.loc[plot_data[var_cat] == use_groups[combo[0]-1], var_y]
-        ser2 = plot_data.loc[plot_data[var_cat] == use_groups[combo[1]-1], var_y]
-        # Significance
-        pvalue = wilcoxonRankSums(ser1, ser2).pvalue
-        if pvalue < 0.05:
-            significant_combinations.append([combo, pvalue])
+    if signif_bar_heights is not None:
+        max_y = plot_data[var_y].max()
+        min_y = plot_data[var_y].min()
 
+        # Check from the outside pairs of boxes inwards
+        ls = list(range(1, len(use_groups) + 1))
+        combinations = [(ls[x], ls[x + y]) for y in reversed(ls) for x in range((len(ls) - y))]
 
-    plot_ymax = plot_ymax_mult * 0.8 * max(1, len(significant_combinations)) * (max_y - min_y) + max_y
-    ax.set_ylim(top=plot_ymax)
+        significant_combinations = []
+        for combo in combinations:
 
-    # Get the y-axis limits
-    bottom, top = ax.get_ylim()
-    # top = plot_ymax
-    y_range = top - bottom
+            ser1 = plot_data.loc[plot_data[var_cat] == use_groups[combo[0]-1], var_y]
+            ser2 = plot_data.loc[plot_data[var_cat] == use_groups[combo[1]-1], var_y]
+            # Significance
+            pvalue = wilcoxonRankSums(ser1, ser2).pvalue
+            if pvalue < 0.05:
+                significant_combinations.append([combo, pvalue])
 
-    # Significance bars
-    for i, combo in enumerate(significant_combinations):
-        # Columns corresponding to the datasets of interest
-        x1 = combo[0][0] - 1
-        x2 = combo[0][1] - 1 
-        # What level is this bar among the bars above the plot?
-        level = len(significant_combinations) - i
-        # Plot the bar
-        bar_height = max_y + (signif_bar_heights * level)
+        plot_ymax = plot_ymax_mult * 0.8 * max(1, len(significant_combinations)) * (max_y - min_y) + max_y
+        ax.set_ylim(top=plot_ymax)
 
-        bar_tips = bar_height - (y_range * 0.02)
-        ax.plot(
-            [x1, x1, x2, x2],
-            [bar_tips, bar_height, bar_height, bar_tips], lw=linewidth * sf, c='k'
-        )
-        # Significance level
-        pvalue = combo[1]
-        if pvalue < 0.001:
-            sig_symbol = '***'
-        elif pvalue < 0.01:
-            sig_symbol = '**'
-        elif pvalue < 0.05:
-            sig_symbol = '*'
-    #     text_height = bar_height + (y_range * 0.01)
-        text_height = bar_height
-        ax.text((x1 + x2) * 0.5, text_height, sig_symbol, ha='center', va='bottom', c='k', fontsize=signif_fontsize * sf)
+        # Get the y-axis limits
+        bottom, top = ax.get_ylim()
+        # top = plot_ymax
+        y_range = top - bottom
 
-        if outfile:
-            fig.savefig(os.path.join(outdir, outfile_name), format='pdf', pad_inches=0.1)
+        # Significance bars
+        for i, combo in enumerate(significant_combinations):
+            # Columns corresponding to the datasets of interest
+            x1 = combo[0][0] - 1
+            x2 = combo[0][1] - 1 
+            # What level is this bar among the bars above the plot?
+            level = len(significant_combinations) - i
+            # Plot the bar
+            bar_height = max_y + (signif_bar_heights * level)
+
+            bar_tips = bar_height - (y_range * 0.02)
+            ax.plot(
+                [x1, x1, x2, x2],
+                [bar_tips, bar_height, bar_height, bar_tips], lw=linewidth * sf, c='k'
+            )
+            # Significance level
+            pvalue = combo[1]
+            if pvalue < 0.001:
+                sig_symbol = '***'
+            elif pvalue < 0.01:
+                sig_symbol = '**'
+            elif pvalue < 0.05:
+                sig_symbol = '*'
+        #     text_height = bar_height + (y_range * 0.01)
+            text_height = bar_height
+            ax.text((x1 + x2) * 0.5, text_height, sig_symbol, ha='center', va='bottom', c='k', fontsize=signif_fontsize * sf)
+    elif ylim is not None:
+        ax.set_ylim(ylim)
+    
+    if outfile:
+        fig.savefig(os.path.join(outdir, outfile_name), format='pdf', pad_inches=0.1)
 
     return ax
 
@@ -221,6 +246,8 @@ def saveCorrelationPlot(sample_annotations, var_y, var_x='c_beta', restrict=True
     
     if var_x == 'c_beta':
         ax.set_xlabel('$c_β$', fontsize=labelfontsize * sf)
+    elif var_x == 'c_beta_adj1':
+        ax.set_xlabel('$c_β^a$', fontsize=labelfontsize * sf)
         
     if outfile:
         fig.savefig(os.path.join(outdir, outfile_name), format='pdf', pad_inches=0.1)
@@ -270,7 +297,7 @@ def plotTumorWise(data, CpG_list=None, sample_type='tumor', sample_list=None, n_
             title = extra_titles[i]
         
         if title_formats is None:
-            title += samp
+            title = samp
         else:
             title = title_formats[i].format(samp)
         
