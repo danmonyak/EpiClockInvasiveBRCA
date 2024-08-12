@@ -55,6 +55,11 @@ print(f'{clinical["reason_purity"].sum()} tumors removed for having LUMP < {LUMP
 
 balanced_CpGs = np.loadtxt(os.path.join(consts['repo_dir'], 'Select_fCpGs', 'outputs', 'balanced_CpGs.txt'), dtype=str)
 
+## delete
+most_random_sites = np.loadtxt('/Users/danielmonyak/Desktop/most_random_sites.txt', dtype=str)
+# most_random_sites = np.loadtxt('/Users/danielmonyak/Desktop/most_random_sites_tightNormal_relaxedTumor.txt', dtype=str)
+##
+
 # Don't need to remove any samples for having >= 5% missing values in Clock fCpGs
 assert (beta_values.loc[balanced_CpGs].isna().mean(axis=0) < 0.05).all()
 print('0 tumors had to be excluded for too many missing Clock beta values')
@@ -77,5 +82,19 @@ print('Saved modified clinical file.')
 c_beta = 1 - beta_values.loc[balanced_CpGs, clinical.index[clinical['in_analysis_dataset']]].std(axis=0)
 c_beta.name = 'c_beta'
 c_beta.to_csv(os.path.join(output_dir, 'cohort.T2.c_beta.txt'), sep='\t')
+
+## delete
+def distHalf(beta_values, center=None):
+    if center is None:
+        center = beta_values.mean(axis=0)
+    n = (~beta_values.isna()).sum(axis=0)
+    return np.sqrt(((beta_values - center)**2).sum(axis=0) / (n - 1))
+##
+
+c_beta = 1 - distHalf(beta_values.loc[most_random_sites, clinical.index[clinical['in_analysis_dataset']]], center=0.5)
+c_beta.name = 'c_beta'
+c_beta.to_csv(os.path.join(output_dir, 'cohort.T2.c_beta.most_random_sites.txt'), sep='\t')
+beta_values.loc[most_random_sites].to_csv(os.path.join(output_dir, 'cohort.T2.methyl.most_random_sites.txt'), sep='\t')
+##
 
 print('Saved c_beta value of each tumor.')

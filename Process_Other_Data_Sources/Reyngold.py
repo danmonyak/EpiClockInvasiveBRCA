@@ -37,10 +37,16 @@ beta_values = pd.read_table(os.path.join(proj_dir, 'GSE58999_betaValues.txt'), i
 
 LUMP_purity = epi_util.getLUMP_values(beta_values)
 pureSamples = LUMP_purity.index[LUMP_purity >= LUMP_THRESH].to_numpy()
-# np.savetxt(os.path.join(proj_dir, 'pureSamples.txt'), pureSamples, fmt='%s')\
+# np.savetxt(os.path.join(proj_dir, 'pureSamples.txt'), pureSamples, fmt='%s')
 LUMP_purity.to_csv(os.path.join(proj_dir, 'LUMP_purity.txt'), sep='\t')
 
 balanced_CpGs = np.loadtxt(os.path.join(consts['repo_dir'], 'Select_fCpGs', 'outputs', 'balanced_CpGs.txt'), dtype=str)
+
+## delete
+most_random_sites = np.loadtxt('/Users/danielmonyak/Desktop/most_random_sites.txt', dtype=str)
+beta_values_most_random = beta_values.loc[most_random_sites, pureSamples]
+beta_values_most_random.to_csv(os.path.join(proj_dir, '/Users/danielmonyak/Desktop/beta_values_most_random.txt'), sep='\t')
+##
 
 beta_values_balanced_CpGs_pureSamples = beta_values.loc[balanced_CpGs, pureSamples]
 beta_values_balanced_CpGs_pureSamples.to_csv(os.path.join(proj_dir, 'beta_values_balanced_CpGs_pureSamples.txt'), sep='\t')

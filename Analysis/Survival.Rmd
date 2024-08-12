@@ -1,0 +1,102 @@
+---
+title: "Survival Analysis"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(survival)
+library(ggplot2)
+library(dplyr)
+library(ggfortify)
+
+official_indir <- '/Users/danielmonyak/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets'
+
+TCGA_clinical_dir <- file.path(official_indir, 'TCGA')
+clinical <- read.table(file.path(TCGA_clinical_dir, 'cohort1.clinical.annotated.tsv'), sep='\t', header=T, row.names=1)
+
+# subtypes.official <- read.table('/Users/danielmonyak/Desktop/subtypes_py.txt', sep='\t', header=T, row.names=1)
+```
+
+```{r}
+event_type <- 'DSS'
+event_time <- paste(event_type, '.time', sep='')
+
+covariates <- c('age', 'subtype.pam50', 'T.Stage', 'Stage', 'year_of_birth', 'CPE', 'FGA')
+
+survival_data = read.table(file.path(TCGA_clinical_dir, 'survival_BRCA_survival.txt'), sep='\t', header=T)
+survival_data[, event_time] <- as.numeric(survival_data[, event_time]) / 365   # change from days to years
+
+survival_data <- survival_data[, names(survival_data) != 'sample']
+survival_data <- survival_data[!duplicated(survival_data), ]
+
+survival_columns <- names(survival_data)
+
+survival_data <- merge(x=survival_data, y=clinical[, c('in_analysis_dataset', 'c_beta', covariates)], by.x='X_PATIENT', by.y=0)
+survival_data$in_analysis_dataset <- (survival_data$in_analysis_dataset == "True")
+
+write.table(survival_data[survival_data$in_analysis_dataset, c(survival_columns, 'c_beta', covariates)], file.path('~/Desktop/survival_data_forMarc.txt'), sep='\t', quote=F, row.names=F)
+
+survival_data <- survival_data[survival_data$in_analysis_dataset, c('X_PATIENT', event_type, event_time, 'c_beta', covariates)]
+
+sprintf('%d samples available', nrow(survival_data))
+
+names(survival_data)[names(survival_data) == event_time] <- 'time'
+names(survival_data)[names(survival_data) == event_type] <- 'event'
+```
+
+
+```{r kaplan-meier}
+# Restrict columns
+survival_data <- survival_data[, c('X_PATIENT', 'event', 'time', 'c_beta', 'T.Stage')]
+survival_data <- survival_data[complete.cases(survival_data), ]
+
+sprintf('%d samples available', nrow(survival_data))
+
+# KM curve - stratify by c_beta - top and bottom halves
+survival_data$top_half <- survival_data$c_beta > median(survival_data$c_beta)
+km_fit <- survfit(Surv(time, event) ~ top_half, data=survival_data)
+autoplot(km_fit)
+
+# KM curve - stratify by c_beta - top and bottom quartiles
+survival_data$top_qrt <- survival_data$c_beta > quantile(survival_data$c_beta, 0.75)
+survival_data$bottom_qrt <- survival_data$c_beta < quantile(survival_data$c_beta, 0.25)
+survival_data.qrts <- survival_data[survival_data$top_qrt | survival_data$bottom_qrt,]
+km_fit <- survfit(Surv(time, event) ~ top_qrt, data=survival_data.qrts)
+autoplot(km_fit)
+
+# Subtype
+autoplot(survfit(Surv(time, event) ~ subtype.pam50, data=survival_data[survival_data$subtype.pam50 != 'Normal',])) +
+  ggtitle(event_type) +
+  xlab('Time (years)') + ylab('Probability of survival')
+
+
+# Stage
+autoplot(survfit(Surv(time, event) ~ Stage, data=survival_data[survival_data$Stage %in% c('Stage I', 'Stage II', 'Stage III', 'Stage IV'),])) +
+  ggtitle(event_type) +
+  xlab('Time (years)') + ylab('Probability of survival')
+
+
+# T Stage
+autoplot(survfit(Surv(time, event) ~ T.Stage, data=survival_data[survival_data$T.Stage %in% c('T1', 'T2', 'T3', 'T4'),])) +
+  ggtitle(event_type) +
+  xlab('Time (years)') + ylab('Probability of survival')
+
+# survival_data$subtype.official <- subtypes.official[survival_data$X_PATIENT, 'Subtype_Selected']
+# survival_data <- survival_data[complete.cases(survival_data), ]
+# autoplot(survfit(Surv(time, event) ~ subtype.official, data=survival_data))
+```
+
+
+```{r cox-model}
+survival_data <- survival_data[complete.cases(survival_data), ]
+summary(coxph(Surv(time, event) ~ c_beta + age_at_diagnosis, data = survival_data))
+
+# Subtype
+summary(coxph(Surv(time, event) ~ subtype.pam50, data = survival_data))
+```
+
+

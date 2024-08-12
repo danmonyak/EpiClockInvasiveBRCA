@@ -34,7 +34,9 @@ patient_list = []
 prim_list = []
 met_list = []
 
-for patient in sample_annotations['Patient'].unique():
+all_patients = sample_annotations['Patient'].unique()
+print(f'Initially using {all_patients.shape[0]} patients')
+for patient in all_patients:
     sa_patient = sample_annotations.loc[(sample_annotations['Patient'] == patient) & sample_annotations['pure']]
     
     prim_samps = sa_patient.loc[sa_patient['Sample Type'] == 'Primary', 'LUMP'].sort_values(ascending=False).index.values
@@ -45,6 +47,9 @@ for patient in sample_annotations['Patient'].unique():
         patient_list.append(patient)
         prim_list.append(prim_samps[0])
         met_list.append(met_samps[0])
+
+
+print(f'Final cohort: {len(patient_list)} patients')
 
 patient_map = pd.DataFrame({'Patient':patient_list, 'Primary':prim_list, 'Metastasis':met_list})
 sample_map = patient_map.melt(id_vars='Patient').rename(columns={'variable':'Sample Type'}).set_index('value')

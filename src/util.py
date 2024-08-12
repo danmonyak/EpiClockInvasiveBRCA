@@ -255,7 +255,7 @@ def saveCorrelationPlot(sample_annotations, var_y, var_x='c_beta', restrict=True
         
         
 def plotTumorWise(data, CpG_list=None, sample_type='tumor', sample_list=None, n_samps=30, ncols=3, suptitle='random pick of samples', extra_titles=None, title_formats=None, xlabel='Beta', random_seed=None, data_obj='beta_values_SELECTION',
-                 outfile=False, outfile_name=None, outdir='images', choose_random=True, color='blue', ylim=None, bins='auto', figsize=None, text_fontsize=None, ticksfontsize=None, opacity=None, sf=1, tight_layout_pad=1):
+                 outfile=False, outfile_name=None, outdir='images', choose_random=True, color='blue', ylim=None, bins='auto', figsize=None, text_fontsize=None, ticksfontsize=None, opacity=None, sf=1, tight_layout_pad=1, kde=False):
     if sample_list is None:
         sample_list = data[sample_type]['pureSamples']
     
@@ -292,7 +292,7 @@ def plotTumorWise(data, CpG_list=None, sample_type='tumor', sample_list=None, n_
 
         plot = sns.histplot(ax=ax, data=data[sample_type][data_obj].loc[CpG_list, samp],
                             stat='proportion', binrange=(0, 1),
-                           color=cur_color, bins=bins, alpha=opacity)
+                           color=cur_color, bins=bins, alpha=opacity, kde=kde)
         if extra_titles is not None:
             title = extra_titles[i]
         
