@@ -4,21 +4,11 @@ author: "Shannon T. Holloway"
 date: "`r Sys.Date()`"
 output: html_document
 params:
-  files: !r list(list("pos" = "~/gsea_home/output/may20/c_beta_measured.Gsea.1716224578513/gsea_report_for_c_beta_measured_pos_1716224578513.tsv",
-                      "neg" = "~/gsea_home/output/may20/c_beta_measured.Gsea.1716224578513/gsea_report_for_c_beta_measured_neg_1716224578513.tsv"),
-                 list("pos" = "~/gsea_home/output/may20/c_beta_adj1.Gsea.1716224608018/gsea_report_for_c_beta_adj1_pos_1716224608018.tsv",
-                      "neg" = "~/gsea_home/output/may20/c_beta_adj1.Gsea.1716224608018/gsea_report_for_c_beta_adj1_neg_1716224608018.tsv"),
-                 list("pos" = "~/gsea_home/output/may20/c_beta_measured_10.Gsea.1716224668303/gsea_report_for_c_beta_measured_pos_1716224668303.tsv",
-                      "neg" = "~/gsea_home/output/may20/c_beta_measured_10.Gsea.1716224668303/gsea_report_for_c_beta_measured_neg_1716224668303.tsv"),
-                 list("pos" = "~/gsea_home/output/may20/c_beta_adj1_10.Gsea.1716224690931/gsea_report_for_c_beta_adj1_pos_1716224690931.tsv",
-                      "neg" = "~/gsea_home/output/may20/c_beta_adj1_10.Gsea.1716224690931/gsea_report_for_c_beta_adj1_neg_1716224690931.tsv"),
-                 list("pos" = "~/gsea_home/output/may20/c_beta_measured_103.Gsea.1716225205429/gsea_report_for_c_beta_measured_pos_1716225205429.tsv",
-                      "neg" = "~/gsea_home/output/may20/c_beta_measured_103.Gsea.1716225205429/gsea_report_for_c_beta_measured_neg_1716225205429.tsv"),
-                 list("pos" = "~/gsea_home/output/may20/c_beta_measured_103.Gsea.1716225207070/gsea_report_for_c_beta_measured_pos_1716225207070.tsv",
-                      "neg" = "~/gsea_home/output/may20/c_beta_measured_103.Gsea.1716225207070/gsea_report_for_c_beta_measured_neg_1716225207070.tsv"))
-  names: !r c("$C_{\\beta}$", "$C_{\\beta}^{\\alpha}$", 
-              "$C_{\\beta}$", "$C_{\\beta}^{\\alpha}$", 
-              "$C_{\\beta}$", "$C_{\\beta}$")
+  files: !r list(list("pos" = "path to tsv for pos report",
+                      "neg" = "path to tsv for neg report"),
+                 list("pos" = "path to tsv for pos report of adjusted",
+                      "neg" = "path to tsv for neg report of adjusted"))
+  names: !r c("$C_{\\beta}$", "$C_{\\beta}^{\\alpha}$")
   fdr_limit: 0.1
 ---
 
@@ -156,49 +146,12 @@ plot_data <- function(data, name) {
 }
 ```
 
-### GSEA Figures Minimally Processed (genes with rowSums(counts) < 10 removed) {.tabset}
-
-The FDR-limit, above which pathways are excluded, is `r params$fdr_limit`.
-
-```{r, results = "asis"}
-for (i in 3L:4L) {
-  cat("\n")
-  cat("#### ", params$names[i], "\n")
-  cat("\n")
-
-  data <- extract_data(params$files[[i]],
-                       fdr.limit = params$fdr_limit)
-  
-  plot_data(data = data, name = params$names[i]) |> print()
-  cat("\n")
-  cat("\n")
-}
-```
-
 ### GSEA Figures Next Iteration Processed (genes with rowSums(counts) < 103 removed) {.tabset}
 
-I recommend we use this cut-off. The FDR-limit, above which pathways are excluded, is `r params$fdr_limit`.
+The FDR-limit, above which pathways are excluded, is `r params$fdr_limit`.
 
 ```{r, results = "asis"}
 for (i in 1L:2L) {
-   cat("\n")
-   cat("#### ", params$names[i], "\n")
-   cat("\n")
-   
-  data <- extract_data(params$files[[i]],
-                       fdr.limit = params$fdr_limit)
-  
-  plot_data(data = data, name = params$names[i]) |> print()
-  cat("\n")
-  cat("\n")
-}
-```
-
-### GSEA Figures Randomization Effect {.tabset}
-The FDR-limit, above which pathways are excluded, is `r params$fdr_limit`.
-
-```{r, results = "asis"}
-for (i in c(1L, 5L, 6L)) {
    cat("\n")
    cat("#### ", params$names[i], "\n")
    cat("\n")
