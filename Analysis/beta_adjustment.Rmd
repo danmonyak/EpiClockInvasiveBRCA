@@ -173,6 +173,26 @@ data_measured <- data.frame("purity" = purity_breast$CPE,
 data_models <- data_measured
 ```
 
+#### Correlation with purity
+
+```{r echo = FALSE}
+data_measured <- data.frame("purity" = purity_breast$CPE,
+                            "purity.bin" = purity_breast$CPE.bin,
+                            "c_beta" = c_beta_measured,
+                            "model" = rep("measured", length(c_beta_measured)))
+
+data_models <- data_measured
+
+gg <- ggplot(data = data_models, aes(c_beta_measured, purity)) +
+  geom_point() +
+  geom_smooth(formula = y ~ x, method = "lm") +
+  ggpubr::stat_cor() +
+  gg_theme +
+  ggtitle(expression("Measured c"[beta] ~ "vs CPE")) +
+  xlab(expression("Measured c"[beta])) + ylab("CPE")
+print(gg)
+```
+
 ### Model ($c_{{\widehat{\beta}}}^{\alpha})$ {.tabset}
 
 #### Definition
