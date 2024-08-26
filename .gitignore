@@ -12,3 +12,4 @@ __pycache__
 figures
 Select_fCpGs/figures
 *.Rproj
+__pycache__

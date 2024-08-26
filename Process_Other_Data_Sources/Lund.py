@@ -8,7 +8,7 @@ from EpiClockInvasiveBRCA.src.consts import consts
 LUMP_THRESH = 0.6
 
 # Indir of data
-proj_dir = os.path.join(consts['official_indir'], 'Ringner')
+proj_dir = os.path.join(consts['official_indir'], 'Lund')
 
 # File mapping TAX IDs to GSM IDs
 TAX_to_GSM_mapping = pd.read_table(os.path.join(proj_dir, 'TAX_to_GSM_mapping.txt'), index_col=0).squeeze('columns')
