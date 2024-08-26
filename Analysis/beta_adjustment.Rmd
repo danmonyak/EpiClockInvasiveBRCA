@@ -173,6 +173,26 @@ data_measured <- data.frame("purity" = purity_breast$CPE,
 data_models <- data_measured
 ```
 
+#### Correlation with purity
+
+```{r echo = FALSE}
+data_measured <- data.frame("purity" = purity_breast$CPE,
+                            "purity.bin" = purity_breast$CPE.bin,
+                            "c_beta" = c_beta_measured,
+                            "model" = rep("measured", length(c_beta_measured)))
+
+data_models <- data_measured
+
+gg <- ggplot(data = data_models, aes(c_beta_measured, purity)) +
+  geom_point() +
+  geom_smooth(formula = y ~ x, method = "lm") +
+  ggpubr::stat_cor() +
+  gg_theme +
+  ggtitle(expression("Measured c"[beta] ~ "vs CPE")) +
+  xlab(expression("Measured c"[beta])) + ylab("CPE")
+print(gg)
+```
+
 ### Model ($c_{{\widehat{\beta}}}^{\alpha})$ {.tabset}
 
 #### Definition
@@ -311,8 +331,7 @@ gg <- ggplot(data = data_adj1, aes(purity, c_beta)) +
   geom_smooth(formula = y ~ x, method = "lm") +
   ggpubr::stat_cor() +
   gg_theme +
-  ggtitle(expression("Purity-Adjusted c"[beta]^alpha~"vs CPE")) +
-  xlab(expression("Purity-Adjusted c"[beta]^alpha)) +
+  xlab(expression("Purity-adjusted c"[beta]^alpha)) +
   ylab("CPE")
 print(gg)
 
@@ -325,8 +344,7 @@ gg <- ggplot(data = data_c_beta, aes(measured, adj1)) +
   geom_smooth(formula = y ~ x, method = "lm") +
   ggpubr::stat_cor() +
   gg_theme +
-  ggtitle(expression("Purity-Adjusted c"[beta]^alpha~"vs Measured c"[beta])) +
-  ylab(expression("Purity-Adjusted c"[beta]^alpha)) +
+  ylab(expression("Purity-adjusted c"[beta]^alpha)) +
   xlab(expression("Measured c"[beta])) +
   geom_line(aes(measured, measured))
 print(gg)
@@ -395,7 +413,6 @@ cibersort$c.beta.adj1 <- c_beta_adj1
 ```{r plot_absolute_score}
 absolute_score_figure <- function(data, x, xname) {
   
-  title <- parse(text = paste('"Absolute Score vs ', xname))
   label <- parse(text = paste('"', xname))
   gg <- ggplot(data = subset(data, !is.na(data[[x]])),
                aes(.data[[x]], .data$Absolute.score..sig.score.)) +
@@ -403,9 +420,7 @@ absolute_score_figure <- function(data, x, xname) {
     geom_smooth(method = "lm", formula = y ~ x, color = "blue") +
     ggpubr::stat_cor() +
     gg_theme +
-    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-    ggtitle(title) +
-    ylab("Absolute Score") + xlab(label)
+    ylab("Absolute score") + xlab(label)
   
   print(gg)
 }
@@ -501,9 +516,7 @@ cell_fraction_figure <- function(data, x, xname) {
     geom_boxplot() +
     scale_fill_manual(values = colors) +
     gg_theme +
-    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
-    ggtitle(title) +
-    ylab("Fraction of Immune Compartment") + xlab(label)
+    ylab("Fraction of immune compartment") + xlab(label)
   print(gg)
 }
 ```
