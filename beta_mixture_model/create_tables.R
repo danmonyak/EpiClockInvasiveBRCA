@@ -1,7 +1,7 @@
 dataset <- 'TCGA'
 infile <- 'tcga_beta_mixture_model.rds'
-# dataset <- 'Ringner'
-# infile <- 'ringner_beta_mixture_model.rds'
+# dataset <- 'Lund'
+# infile <- 'lund_beta_mixture_model.rds'
 
 indir <- '/Users/danielmonyak/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/Beta Peak Decomposition'
 

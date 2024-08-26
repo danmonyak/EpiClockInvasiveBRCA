@@ -8,7 +8,7 @@ output:
 params:
   cloud_path: "~/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/"
   data_dir: "MolClock_Paper_1/1. Analytic Datasets/TCGA/"
-  data_dir_ringner: "MolClock_Paper_1/1. Analytic Datasets/Ringner/"
+  data_dir_lund: "MolClock_Paper_1/1. Analytic Datasets/Lund/"
   working_dir: "~/Desktop/FromDesktop_2bsorted/cibersort/"
   methyl_filename: "cohort1.methyl"
   clinical_filename: "cohort1.clinical"
@@ -102,39 +102,39 @@ if (is.null(betaMixture_TCGA)) {
 }
 ```
 
-## Ringner Data
+## Lund Data
 
-```{r get_ringner_data}
-ringner.methyl <- read.csv(paste0(params$cloud_path, params$data_dir_ringner, 
+```{r get_lund_data}
+lund.methyl <- read.csv(paste0(params$cloud_path, params$data_dir_lund, 
                                   "beta_values_FULL_balanced_CpGs.txt"), sep = "\t")
-rownames(ringner.methyl) <- ringner.methyl[, 1L]
-ringner.methyl <- ringner.methyl[, -1L]
+rownames(lund.methyl) <- lund.methyl[, 1L]
+lund.methyl <- lund.methyl[, -1L]
 ```
 
-```{r Ringner_beta_mixture_model}
-betaMixture_Ringner<- tryCatch(readRDS(paste0(params$cloud_path, params$data_dir_ringner,
-                                              "ringner_beta_mixture_model.rds")),
+```{r Lund_beta_mixture_model}
+betaMixture_Lund<- tryCatch(readRDS(paste0(params$cloud_path, params$data_dir_lund,
+                                              "lund_beta_mixture_model.rds")),
                                error = function(e) { NULL })
 
-if (is.null(betaMixture_Ringner)) {
+if (is.null(betaMixture_Lund)) {
   
-  alpha <- matrix(0.0, ncol(ringner.methyl), 3L)
-  delta <- matrix(0.0, ncol(ringner.methyl), 3L)
+  alpha <- matrix(0.0, ncol(lund.methyl), 3L)
+  delta <- matrix(0.0, ncol(lund.methyl), 3L)
   z <- list()
-  track_number_removed_Ringner <- numeric(ncol(ringner.methyl))
-  for (i in 1L:ncol(ringner.methyl)) {
+  track_number_removed_Lund <- numeric(ncol(lund.methyl))
+  for (i in 1L:ncol(lund.methyl)) {
     
-    are_na <- is.na(ringner.methyl[, i])
-    rm_extremes <- !are_na & {ringner.methyl[, i] <= 0.98 & ringner.methyl[, i] >= 0.02}
-    track_number_removed_Ringner[i] <- sum(!rm_extremes)
+    are_na <- is.na(lund.methyl[, i])
+    rm_extremes <- !are_na & {lund.methyl[, i] <= 0.98 & lund.methyl[, i] >= 0.02}
+    track_number_removed_Lund[i] <- sum(!rm_extremes)
     
-    res <- tryCatch(suppressWarnings(BetaMixture_my(ringner.methyl[rm_extremes, ], K = 3, 
+    res <- tryCatch(suppressWarnings(BetaMixture_my(lund.methyl[rm_extremes, ], K = 3, 
                                                     forever = 1500,
                                                     debug = FALSE,
                                                     epsilon = 1e-3, 
                                                     relative = 1e-3)),
                     error = function(e) {
-                      message(i, " ", sum(is.na(ringner.methyl[, i])), " ", e$message)
+                      message(i, " ", sum(is.na(lund.methyl[, i])), " ", e$message)
                       stop("T")
                     })
   
@@ -149,8 +149,8 @@ if (is.null(betaMixture_Ringner)) {
   
   saveRDS(list(alpha = alpha, delta = delta, Z = z), 
           file = paste0(params$cloud_path, params$data_dir,
-                        "ringner_beta_mixture_model.rds"))
+                        "lund_beta_mixture_model.rds"))
   
-  print(table(track_number_removed_Ringner))
+  print(table(track_number_removed_Lund))
 }
 ```
