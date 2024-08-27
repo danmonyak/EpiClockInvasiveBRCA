@@ -1,17 +1,13 @@
-# import EpiClockInvasiveBRCA.src.cleanAnnotations as cleanAnnot
-
 import pandas as pd
 import numpy as np
 import os
 import sys
 from EpiClockInvasiveBRCA.src.consts import consts
 
-TCGA_datadir = os.path.join(consts['official_indir'], 'TCGA')
-
 ## 450k and 850k microarray site annotations
 # def chip450_850():
     
-chip_annot_dir = os.path.join(TCGA_datadir, 'chip_annots')
+chip_annot_dir = os.path.join(consts['TCGA_datadir'], 'chip_annots')
 keep_chroms = ['chr' + str(i) for i in range(1, 23)] + ['chrX']
 
 chip450_info = pd.read_csv(os.path.join(chip_annot_dir, 'humanmethylation450_15017482_v1-2.csv'), index_col=0, low_memory=False)

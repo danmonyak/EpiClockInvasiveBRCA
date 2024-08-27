@@ -11,12 +11,8 @@ DEATH_RATE = 0.14
 
 output_dir = 'synchro_met'
 
-if not os.path.exists(output_dir):
-    os.mkdir(output_dir)
+os.makedirs(output_dir, exist_ok=True)
 
-# FLIP_RATE /= 2
-# DEATH_RATE += 0.006
-    
 init_params = {'flip_rate':FLIP_RATE, # flip rate per cell division per allele
                'growth_rate':GROWTH_RATE, # cell divisions per day
                'death_rate':DEATH_RATE, # cell deaths per day,

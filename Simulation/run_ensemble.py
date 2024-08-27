@@ -22,9 +22,7 @@ FLIP_RATE = 0.002
 GROWTH_RATE = 0.17
 # DEATH_RATE = 0.15
 
-if not os.path.exists(prog_params['output_dir']):
-    os.mkdir(prog_params['output_dir'])
-    
+os.makedirs(prog_params['output_dir'], exist_ok=True)    
     
 init_params = {'flip_rate':FLIP_RATE, # flip rate per cell division per allele
                'growth_rate':GROWTH_RATE, # cell divisions per day

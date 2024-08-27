@@ -28,8 +28,8 @@ print('Loaded.')
 
 # Create outdir if necessary
 output_dir = os.path.join('outputs', 'cohort_T2')
-if not os.path.exists(output_dir):
-    os.makedirs(output_dir)
+os.makedirs(output_dir, exist_ok=True)
+
     
 print(f'{clinical.shape[0]} tumors initially')
 

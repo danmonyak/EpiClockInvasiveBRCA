@@ -11,9 +11,7 @@ DEATH_RATE = 0.15
 
 output_dir = 'sc_met'
 
-if not os.path.exists(output_dir):
-    os.makedirs(output_dir)
-    
+os.makedirs(output_dir, exist_ok=True)
     
 init_params = {'flip_rate':FLIP_RATE, # flip rate per cell division per allele
                'growth_rate':GROWTH_RATE, # cell divisions per day
