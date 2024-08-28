@@ -7,3 +7,21 @@ The code in this repository can be used to generate all figures and results foun
 Software requirements:
 - Python 3
 - R
+
+## 2. Pipeline
+
+### 1.
+
+### 2.
+
+### 3.
+
+### 4.
+
+### 5.
+
+### 6.
+
+### 7.
+
+### 8.
