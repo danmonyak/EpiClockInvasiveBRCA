@@ -20,7 +20,6 @@ class Ensemble:
     def __init__(self, init_params, gen, max_cells=MAX_CELLS):
         self.init_params = init_params
         self.gen = gen
-        self.time_obj = dict(zip(['a1', 'a2', 'a3', 'b', 'c', 'd'], [0]*8))
         self.max_cells = max_cells
         self.available_cells = list(range(self.max_cells))[::-1]
         self.living_cells = [self.available_cells.pop()]
@@ -90,22 +89,10 @@ class Ensemble:
             self.living_cells = [self.available_cells.pop()]
             return False
         
-        self.time_obj['a1'] -= process_time()
         
         self.gen.shuffle(self.living_cells)
-        
-        self.time_obj['a1'] += process_time()
-        self.time_obj['a2'] -= process_time()
-
         self.available_cells.extend(self.living_cells[n_divide + n_nothing:])
-        
-        self.time_obj['a2'] += process_time()
-        self.time_obj['a3'] -= process_time()
-        
         self.living_cells = self.living_cells[:n_divide + n_nothing]
-        
-        self.time_obj['a3'] += process_time()
-        self.time_obj['b'] -= process_time()
         
         if n_divide > len(self.available_cells):
             print('Simulation reached capacity')
@@ -122,19 +109,11 @@ class Ensemble:
         mu = self.init_params['flip_rate']
         pvals = [(1 - mu)**2, mu*(1 - mu), mu*(1 - mu), mu**2]
         
-        self.time_obj['b'] += process_time()
-        self.time_obj['c'] -= process_time()
-        
         flip_event_arr = self.gen.choice(4, size=new_cell_states.shape, replace=True, p=pvals)
-        
-        self.time_obj['c'] += process_time()
-        self.time_obj['d'] -= process_time()
         
         self.state_arr[new_cell_idxs] = new_cell_states ^ flip_event_arr
 #         new_cell_states ^ flip_event_arr
 #         self.state_arr = np.vstack([self.state_arr, new_cell_states])
-        
-        self.time_obj['d'] += process_time()
     
         return True    # tumor is still alive
 
@@ -146,10 +125,7 @@ def plotBetaValues(ax, cell_count_list=None, beta_values=None, binwidth=None, co
     elif beta_values is None:
         sys.exit('One must be not None')
     
-    sns.histplot(ax=ax, x=beta_values,
-#                  binwidth=0.1,
-                 bins=bins,
-                 stat='proportion', color=color, alpha=opacity)
+    sns.histplot(ax=ax, x=beta_values, bins=bins, stat='proportion', color=color, alpha=opacity)
     ax.set_xlabel('β', fontsize=labelfontsize * sf)
     ax.set_ylabel('Proportion', fontsize=labelfontsize * sf)
     ax.set_xticks([0, 0.5, 1])
