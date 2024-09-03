@@ -8,7 +8,29 @@ Software requirements:
 - Python 3
 - R
 
-## 2. Pipeline
+## 2. Setup
+
+Fork and clone this repository locally as normal.
+
+### Python
+
+### R
+
+In your R environment, preferably Rstudio, run
+
+```
+file.path(Sys.getenv("R_HOME"), 'etc', 'Rprofile.site')
+```
+
+Append the following line to the file at the path outputted (create the file if necessary):
+
+```
+repo_dir <- '/PATH/TO/EpiClockInvasiveBRCA'
+```
+
+providing the path to the local repository clone.
+
+## 3. Pipeline
 
 ### 1.
 
