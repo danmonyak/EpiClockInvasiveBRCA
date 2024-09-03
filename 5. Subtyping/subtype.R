@@ -20,7 +20,7 @@ pam50.genes <- pam50.robust$centroids.map$probe
 
 # Import TPM data for TCGA breast samples
 official_indir <- '/Users/danielmonyak/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets'
-TCGA.tpm <- read.table(file.path(official_indir, 'TCGA', 'cohort1.rnaseq_tpm.tsv'))
+TCGA.tpm <- read.table(file.path(official_indir, 'TCGA', 'TCGA.rnaseq_tpm.tsv'))
 
 # > pam50.genes[!(pam50.genes %in% TCGA.tpm$gene_name)]
 # [1] "CDCA1" "KNTC2" "ORC6L"

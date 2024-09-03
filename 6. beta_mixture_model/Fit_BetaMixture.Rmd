@@ -10,8 +10,8 @@ params:
   data_dir: "MolClock_Paper_1/1. Analytic Datasets/TCGA/"
   data_dir_lund: "MolClock_Paper_1/1. Analytic Datasets/Lund/"
   working_dir: "~/Desktop/FromDesktop_2bsorted/cibersort/"
-  methyl_filename: "cohort1.methyl"
-  clinical_filename: "cohort1.clinical"
+  methyl_filename: "TCGA.methyl"
+  clinical_filename: "TCGA.clinical"
 ---
 
 ```{r setup, include=FALSE}

@@ -13,10 +13,10 @@ params:
   save_path: "TCGA/"
   GDCdata_dir: "gdc_data"
   rm_GDCdata_dir: false
-  clinical_filename: "cohort1.clinical"
-  methyl_filename: "cohort1.methyl"
-  gene_filename: "cohort1.rnaseq"
-  cnv_filename: "cohort1.cnv"
+  clinical_filename: "TCGA.clinical"
+  methyl_filename: "TCGA.methyl"
+  gene_filename: "TCGA.rnaseq"
+  cnv_filename: "TCGA.cnv"
 ---
 
 ```{r setup, include=FALSE}
@@ -26,7 +26,6 @@ knitr::opts_chunk$set(echo = TRUE)
 library(TCGAbiolinks)
 library(jsonlite)
 
-source("~/Documents/Duke/lab/EpiClockInvasiveBRCA/src/util.R")
 consts <- read_json(file.path(repo_dir, 'src', 'consts.json'))
 save_path <- file.path(consts['official_indir'], params$save_path)
 ```

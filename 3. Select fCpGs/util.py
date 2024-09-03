@@ -91,7 +91,7 @@ def getDataDict():
     # Nested dictionary
     data = {'tumor':{}, 'normal':{}}
     
-    data['tumor']['beta_values'] = pd.read_table(os.path.join(consts['TCGA_datadir'], 'cohort1.methyl.tsv'), index_col=0)
+    data['tumor']['beta_values'] = pd.read_table(os.path.join(consts['TCGA_datadir'], 'TCGA.methyl.tsv'), index_col=0)
     data['normal']['beta_values'] = pd.read_table(os.path.join(consts['official_indir'], 'Johnson', 'johnson-beta_values.txt'), index_col=0)
 
     # Check that CpG Sites are the same in each DF
