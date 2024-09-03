@@ -19,7 +19,14 @@ from itertools import product, accumulate
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import linregress, ranksums
-from EpiClockInvasiveBRCA.src.consts import consts
+import json
+
+subdir_list = os.getcwd().split(os.sep)
+while subdir_list[-1] != 'EpiClockInvasiveBRCA':
+    subdir_list.pop()
+repo_dir = os.path.join(os.sep, *subdir_list)
+
+consts = json.loads(''.join(open(os.path.join(repo_dir, 'src', 'consts.json'), 'r').readlines()))
 
 sampleToPatientID = lambda x: '-'.join(x.split('-')[:3])
 getSampleID = lambda x: '-'.join(x.split('-')[:4])

@@ -2,7 +2,8 @@ import pandas as pd
 import numpy as np
 import os
 import sys
-from EpiClockInvasiveBRCA.src.consts import consts
+import EpiClockInvasiveBRCA.src.util as epi_util
+consts = epi_util.consts
 
 ## 450k and 850k microarray site annotations
 # def chip450_850():
