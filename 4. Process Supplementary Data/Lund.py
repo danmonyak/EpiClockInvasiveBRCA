@@ -1,14 +1,32 @@
+"""
+Lund.py
+=======
+Author - Daniel Monyak
+9-5-24
+=======
+
+Source code for processing the Lund cohort data
+
+1. Process sample annotations
+2. Import beta values
+3. Filter samples
+4. Calculate c_beta values for samples
+
+"""
+
 import pandas as pd
 import numpy as np
 import os
 import EpiClockInvasiveBRCA.src.util as epi_util
 consts = epi_util.consts
 
-# LUMP threshold for this dataset
-LUMP_THRESH = 0.6
-
-# Indir of data
 proj_dir = os.path.join(consts['official_indir'], 'Lund')
+
+## Create outdir if necessary
+output_dir = os.path.join('outputs', 'Lund')
+os.makedirs(output_dir, exist_ok=True)
+
+## Sample annotations
 
 # File mapping TAX IDs to GSM IDs
 TAX_to_GSM_mapping = pd.read_table(os.path.join(proj_dir, 'TAX_to_GSM_mapping.txt'), index_col=0).squeeze('columns')
@@ -21,16 +39,11 @@ clinical['grade'] = clinical['grade'].map({1:'Grade 1', 2:'Grade 2', 3:'Grade 3'
 
 print('Loading beta values, should take <3 minutes...')
 
-# Import beta values
+## Beta values
 beta_values = pd.read_table(os.path.join(proj_dir, 'GSE75067_betaValues.txt'), index_col=0)
 
 print('Loaded.')
 
-# Create outdir if necessary
-output_dir = os.path.join('outputs', 'Lund')
-os.makedirs(output_dir, exist_ok=True)
-
-    
 print(f'{clinical.shape[0]} tumors initially')
 
 # Remove second tumor from patient with two tumors
@@ -44,19 +57,23 @@ clinical['in_CpG_dataset'] = clinical['primary'] == 'primary'
 print(f'{clinical["in_CpG_dataset"].sum()} primary tumors')
 print(f'{clinical.loc[clinical["in_CpG_dataset"], "age"].unique().shape[0]} unique patients')
 
-# Filter by LUMP
+## Filter samples based on LUMP purity value
 # Set in_CpG_dataset and reason_purity flags accordingly - based on LUMP value
 # Remove impure tumors from beta_values
+
+# LUMP threshold for this dataset
+LUMP_THRESH = consts['lump_threshold_dict']['Lund']
+
 LUMP_purity = epi_util.getLUMP_values(beta_values)
 clinical = clinical.merge(LUMP_purity.rename('LUMP'), left_index=True, right_index=True)
 clinical['reason_purity'] = clinical['in_CpG_dataset'] & (clinical['LUMP'] < LUMP_THRESH)
 clinical['in_CpG_dataset'] &= ~clinical['reason_purity']
 print(f'{clinical["reason_purity"].sum()} tumors removed for having LUMP < {LUMP_THRESH}')
 
-balanced_CpGs = np.loadtxt(os.path.join(consts['repo_dir'], 'Select_fCpGs', 'outputs', 'balanced_CpGs.txt'), dtype=str)
+Clock_CpGs = np.loadtxt(os.path.join(consts['repo_dir'], 'Select_fCpGs', 'outputs', 'Clock_CpGs.txt'), dtype=str)
 
 # Don't need to remove any samples for having >= 5% missing values in Clock fCpGs
-assert (beta_values.loc[balanced_CpGs].isna().mean(axis=0) < 0.05).all()
+assert (beta_values.loc[Clock_CpGs].isna().mean(axis=0) < 0.05).all()
 print('0 tumors had to be excluded for too many missing Clock beta values')
 
 beta_values = beta_values[clinical.index[clinical['in_CpG_dataset']]]
@@ -68,13 +85,13 @@ n_removed_histology = clinical['in_CpG_dataset'].sum() - clinical['in_analysis_d
 print(f'{n_removed_histology} tumors removed for having non-ductal histology')
 print(f'{clinical["in_analysis_dataset"].sum()} final tumors')
 
-# Save file
+# Save clinical file
 clinical.to_csv(os.path.join(proj_dir, 'Lund.clinical.txt'), sep='\t')
 
 print('Saved modified clinical file.')
 
-# Calculate and save c_beta values for each tumor
-c_beta = 1 - beta_values.loc[balanced_CpGs, clinical.index[clinical['in_analysis_dataset']]].std(axis=0)
+## Calculate and save c_beta values for each tumor
+c_beta = 1 - beta_values.loc[Clock_CpGs, clinical.index[clinical['in_analysis_dataset']]].std(axis=0)
 c_beta.name = 'c_beta'
 c_beta.to_csv(os.path.join(output_dir, 'Lund.c_beta.txt'), sep='\t')
 

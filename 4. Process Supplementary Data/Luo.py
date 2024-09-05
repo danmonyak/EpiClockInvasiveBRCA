@@ -1,3 +1,14 @@
+"""
+Luo.py
+=======
+Author - Daniel Monyak
+9-5-24
+=======
+
+Source code for processing the Luo data sample annotations
+
+"""
+
 import pandas as pd
 import os
 consts = epi_util.consts
