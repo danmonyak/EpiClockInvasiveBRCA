@@ -2,12 +2,14 @@
     "official_indir": "/Users/danielmonyak/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets",
     "repo_dir": "/Users/danielmonyak/Documents/Duke/lab/EpiClockInvasiveBRCA",
     "TCGA_datadir": "/Users/danielmonyak/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/TCGA",
+    "Lund_datadir": "/Users/danielmonyak/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/Lund",
     "repo_datadir": "/Users/danielmonyak/Documents/Duke/lab/EpiClockInvasiveBRCA/data",
     "lump_threshold_dict": {
         "Johnson": 0.7,
         "Lund": 0.6,
         "Reyngold": 0.6,
-        "Desmedt": 0.6
+        "Desmedt": 0.6,
+        "Default": 0.6
     },
     "palette_jco": [
         "#0073C2FF",
