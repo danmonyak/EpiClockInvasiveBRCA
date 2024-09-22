@@ -41,7 +41,7 @@ replacing the code above appropriately with the path to the local repository clo
 
 ### Path variables
 
-Open consts.json in a text editor and insert appropriate paths for the following attributes:
+Open src/consts.json in a text editor and insert appropriate paths for the following attributes:
 - **repo_dir** — Path to the repository (same as the R variable "repo_dir" in the previous step)
 - **official_indir** — Path to a directory in an external file location (preferably Box) that can hold terabytes of data
 - **TCGA_datadir** — Path to a directory that will hold the TCGA data (preferably a subdirectory of official_indir)
