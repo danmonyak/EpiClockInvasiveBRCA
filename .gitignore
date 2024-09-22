@@ -13,3 +13,4 @@ figures
 Select_fCpGs/figures
 *.Rproj
 __pycache__
+MANIFEST.txt

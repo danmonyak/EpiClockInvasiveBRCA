@@ -71,7 +71,7 @@ Of the `r length(participant_subset)` participants of interest, `r length(unique
 We limit the tumors of interest to those with CPE $\ge 0.6$.
 
 ```{r read_purity}
-purity_data <- read.csv(file.path(consts['official_indir'], 'TCGA', params$purity_file))
+purity_data <- read.csv(file.path(consts['TCGA_datadir'], params$purity_file))
 
 purity_participant_ids <- substr(purity_data$Sample.ID, 1L, params$participant_id_length)
 purity_tumor_ids <- substr(purity_data$Sample.ID, 1L, params$tumor_id_length)

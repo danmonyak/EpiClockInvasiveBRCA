@@ -6,9 +6,10 @@ output:
   html_document:
     code_folding: "hide"
 params:
-  cloud_path: "~/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/"
-  data_dir: "MolClock_Paper_1/1. Analytic Datasets/TCGA/"
-  data_dir_lund: "MolClock_Paper_1/1. Analytic Datasets/Lund/"
+  # cloud_path: "~/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/"
+  # data_dir: "MolClock_Paper_1/1. Analytic Datasets/TCGA/"
+  # data_dir_lund: "MolClock_Paper_1/1. Analytic Datasets/Lund/"
+  outdir: 'Beta Peak Decomposition',
   working_dir: "~/Desktop/FromDesktop_2bsorted/cibersort/"
   methyl_filename: "TCGA.methyl"
   clinical_filename: "TCGA.clinical"
@@ -16,7 +17,7 @@ params:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-source("~/Desktop/FromDesktop_2bsorted/cibersort/R_codes/my_BetaMixture.R")
+source("./my_BetaMixture.R")
 library(ggsci)
 library(ggplot2)
 ```
@@ -45,19 +46,19 @@ Package available on R-Forge. Required modification of a testing criteria
 to avoid floating point issue (`sum(x) == 1` vs `isTRUE(all.equal(sum(x), 1.0))`)
 
 ```{r TCGA_beta_mixture_model}
-betaMixture_TCGA <- tryCatch(readRDS(paste0(params$cloud_path, params$data_dir,
+betaMixture_TCGA <- tryCatch(readRDS(file.path(consts['TCGA_datadir'],
                                             "tcga_beta_mixture_model.rds")),
                              error = function(e) { NULL })
 
 
 if (is.null(betaMixture_TCGA)) {
-  TCGA_clinical <- readRDS(paste0(params$cloud_path, params$data_dir,
-                                  params$clinical_filename, ".rds"))
+  TCGA_clinical <- readRDS(file.path(consts['TCGA_datadir'],
+                                  paste0(params$clinical_filename, ".rds")))
   
   analysis_tumors <- TCGA_clinical$in_analysis_dataset
   
-  brca.methyl <- readRDS(paste0(params$cloud_path, params$data_dir,
-                                params$methyl_filename, ".rds"))
+  brca.methyl <- readRDS(file.path(consts['TCGA_datadir'],
+                                paste0(params$methyl_filename, ".rds")))
   keep <- substr(colnames(brca.methyl), 1, 12L) %in% TCGA_clinical$submitter_id[analysis_tumors]
   
   brca.methyl <- brca.methyl[, keep]
@@ -95,7 +96,7 @@ if (is.null(betaMixture_TCGA)) {
   }
   
   saveRDS(list(alpha = alpha, delta = delta, Z = z), 
-          file = paste0(params$cloud_path, params$data_dir,
+          file = file.path(consts['TCGA_datadir'], 'Beta Peak Decomposition', 'TCGA',
                         "tcga_beta_mixture_model.rds"))
   
   print(table(track_number_removed_TCGA))
@@ -105,14 +106,14 @@ if (is.null(betaMixture_TCGA)) {
 ## Lund Data
 
 ```{r get_lund_data}
-lund.methyl <- read.csv(paste0(params$cloud_path, params$data_dir_lund, 
+lund.methyl <- read.csv(file.path(consts['Lund_datadir'], 
                                   "beta_values_FULL_balanced_CpGs.txt"), sep = "\t")
 rownames(lund.methyl) <- lund.methyl[, 1L]
 lund.methyl <- lund.methyl[, -1L]
 ```
 
 ```{r Lund_beta_mixture_model}
-betaMixture_Lund<- tryCatch(readRDS(paste0(params$cloud_path, params$data_dir_lund,
+betaMixture_Lund<- tryCatch(readRDS(file.path(consts['Lund_datadir'],
                                               "lund_beta_mixture_model.rds")),
                                error = function(e) { NULL })
 
@@ -148,7 +149,7 @@ if (is.null(betaMixture_Lund)) {
   }
   
   saveRDS(list(alpha = alpha, delta = delta, Z = z), 
-          file = paste0(params$cloud_path, params$data_dir,
+          file = file.path(consts['TCGA_datadir'], 'Beta Peak Decomposition', 'Lund'
                         "lund_beta_mixture_model.rds"))
   
   print(table(track_number_removed_Lund))

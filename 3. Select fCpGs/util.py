@@ -5,10 +5,8 @@ Author - Daniel Monyak
 5-20-24
 =======
 
-
-Provides
-    Helper functions needed by Select_fCpGs notebook
-
+Functions used by Select_fCpGs notebook
+    
 """
 
 import pandas as pd

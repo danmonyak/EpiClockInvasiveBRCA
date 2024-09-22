@@ -1,9 +1,11 @@
+consts <- read_json(file.path(repo_dir, 'src', 'consts.json'))
+
 dataset <- 'TCGA'
 infile <- 'tcga_beta_mixture_model.rds'
 # dataset <- 'Lund'
 # infile <- 'lund_beta_mixture_model.rds'
 
-indir <- '/Users/danielmonyak/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/Beta Peak Decomposition'
+indir <- file.path(consts['official_indir'], 'Beta Peak Decomposition')
 
 BetaMixture <- readRDS(file.path(indir, dataset, infile))
 outdir <- file.path(indir, dataset, 'readable_tables')

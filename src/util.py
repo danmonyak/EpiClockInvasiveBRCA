@@ -5,9 +5,8 @@ Author - Daniel Monyak
 6-7-24
 =======
 
-
-Provides
-    Hasdfadf
+Master module for this project
+Functions and variables used by all scripts and notebooks
 
 """
 
@@ -21,11 +20,19 @@ import seaborn as sns
 from scipy.stats import linregress, ranksums
 import json
 
+## Finds the absolute path to the repository directory (repo_dir) whenever this module is imported
+## repo_dir is needed to read src/consts.json
 subdir_list = os.getcwd().split(os.sep)
-while subdir_list[-1] != 'EpiClockInvasiveBRCA':
+while True:
+    if subdir_list[-1] == 'EpiClockInvasiveBRCA':
+        break
+    
     subdir_list.pop()
-repo_dir = os.path.join(os.sep, *subdir_list)
+        
+if found_dir == True:
+    repo_dir = os.path.join(os.sep, *subdir_list)
 
+##
 consts = json.loads(''.join(open(os.path.join(repo_dir, 'src', 'consts.json'), 'r').readlines()))
 
 sampleToPatientID = lambda x: '-'.join(x.split('-')[:3])
@@ -43,14 +50,6 @@ def pearsonCorrelation(ser1, ser2, get_n_used=False):
     else:
         return res
 
-# def wilcoxonRankSums(ser1, ser2, get_n_used=False):
-#     use_mask = ~(ser1.isna() | ser2.isna())
-#     res = ranksums(ser1[use_mask], ser2[use_mask])
-#     if get_n_used:
-#         return res, use_mask.sum()
-#     else:
-#         return res
-    
 def wilcoxonRankSums(ser1, ser2):
     return ranksums(ser1.dropna(), ser2.dropna())
 
@@ -190,7 +189,7 @@ def saveBoxPlotNew(sample_annotations, var_cat, var_y='c_beta', restrict=True, u
 
     return ax
 
-lump_CpGs = np.loadtxt(os.path.join(consts['repo_datadir'], 'lump-CpGs-44.txt'), dtype=str)
+lump_CpGs = np.loadtxt(os.path.join(consts['repo_dir'], 'data', 'lump-CpGs-44.txt'), dtype=str)
 def getLUMP_values(beta_values):
     included_lump = np.intersect1d(lump_CpGs, beta_values.index)
     if included_lump.shape[0] != lump_CpGs.shape[0]:

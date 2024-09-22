@@ -6,6 +6,8 @@ library(tidyverse)
 library(DESeq2)
 library(genefu)
 
+consts <- read_json(file.path(repo_dir, 'src', 'consts.json'))
+
 # Load pam50 params -------------------------------------------------------
 
 #- See https://rdrr.io/github/bhklab/genefu/man/pam50.html
@@ -19,8 +21,7 @@ data(pam50.robust)
 pam50.genes <- pam50.robust$centroids.map$probe
 
 # Import TPM data for TCGA breast samples
-official_indir <- '/Users/danielmonyak/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets'
-TCGA.tpm <- read.table(file.path(official_indir, 'TCGA', 'TCGA.rnaseq_tpm.tsv'))
+TCGA.tpm <- read.table(file.path(consts['TCGA_datadir'], 'TCGA.rnaseq_tpm.tsv'))
 
 # > pam50.genes[!(pam50.genes %in% TCGA.tpm$gene_name)]
 # [1] "CDCA1" "KNTC2" "ORC6L"
@@ -44,24 +45,24 @@ TCGA.tpm <- TCGA.tpm[!duplicated(TCGA.tpm$gene_name), ]
 rownames(TCGA.tpm) <- TCGA.tpm$gene_name
 TCGA.tpm <- TCGA.tpm[, !(names(TCGA.tpm) %in% c('gene_id', 'gene_name'))]
 
-# Load TCGA gene expression data
-gene.expr <- read.table('/Users/danielmonyak/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/TCGA/gene_expr.txt')
-
-split.rownames = strsplit(rownames(gene.expr), '[|]')
-gene.name = c()
-ncbi.gene.id = c()
-for (sp.row in split.rownames) {
-  gene.name <- append(gene.name, sp.row[1])
-  ncbi.gene.id <- append(ncbi.gene.id, sp.row[2])
-}
-
-gene.name[ncbi.gene.id == '83540'] = 'CDCA1'
-gene.name[ncbi.gene.id == '10403'] = 'KNTC2'
-gene.expr$gene.name <- gene.name
-
-gene.expr <- gene.expr[isUnique(gene.expr$gene.name), ]
-rownames(gene.expr) <- gene.expr$gene.name
-gene.expr <- gene.expr[, names(gene.expr) != 'gene.name']
+# # Load TCGA gene expression data
+# gene.expr <- read.table(file.path(consts['TCGA_datadir'], 'gene_expr.txt'))
+# 
+# split.rownames = strsplit(rownames(gene.expr), '[|]')
+# gene.name = c()
+# ncbi.gene.id = c()
+# for (sp.row in split.rownames) {
+#   gene.name <- append(gene.name, sp.row[1])
+#   ncbi.gene.id <- append(ncbi.gene.id, sp.row[2])
+# }
+# 
+# gene.name[ncbi.gene.id == '83540'] = 'CDCA1'
+# gene.name[ncbi.gene.id == '10403'] = 'KNTC2'
+# gene.expr$gene.name <- gene.name
+# 
+# gene.expr <- gene.expr[isUnique(gene.expr$gene.name), ]
+# rownames(gene.expr) <- gene.expr$gene.name
+# gene.expr <- gene.expr[, names(gene.expr) != 'gene.name']
 
 # Prep the count matrix ---------------------------------------------------
 
