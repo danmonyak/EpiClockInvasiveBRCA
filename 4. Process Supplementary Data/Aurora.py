@@ -33,7 +33,7 @@ sample_annotations.index = sample_annotations['BCR Portion barcode'].map(lambda 
 beta_values = pd.read_table(os.path.join(proj_dir, 'GSE212370_20220828_MethylationEPIC_GEO_data_matrix146.tsv'), index_col=0)
 beta_values = beta_values.rename(columns=lambda x:'-'.join(x.split('-')[:6]))
 
-Clock_CpGs = np.loadtxt(os.path.join(consts['repo_dir'], 'Select_fCpGs', 'outputs', 'balanced_CpGs.txt'), dtype=str)
+Clock_CpGs = np.loadtxt(os.path.join(consts['repo_dir'], '3. Select fCpGs', 'outputs', 'balanced_CpGs.txt'), dtype=str)
 beta_values_Clock = beta_values.loc[Clock_CpGs]
 
 ## LUMP purity - sample filtering

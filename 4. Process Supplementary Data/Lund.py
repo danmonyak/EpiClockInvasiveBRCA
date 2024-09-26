@@ -70,7 +70,7 @@ clinical['reason_purity'] = clinical['in_CpG_dataset'] & (clinical['LUMP'] < LUM
 clinical['in_CpG_dataset'] &= ~clinical['reason_purity']
 print(f'{clinical["reason_purity"].sum()} tumors removed for having LUMP < {LUMP_THRESH}')
 
-Clock_CpGs = np.loadtxt(os.path.join(consts['repo_dir'], 'Select_fCpGs', 'outputs', 'Clock_CpGs.txt'), dtype=str)
+Clock_CpGs = np.loadtxt(os.path.join(consts['repo_dir'], '3. Select fCpGs', 'outputs', 'Clock_CpGs.txt'), dtype=str)
 
 # Don't need to remove any samples for having >= 5% missing values in Clock fCpGs
 assert (beta_values.loc[Clock_CpGs].isna().mean(axis=0) < 0.05).all()

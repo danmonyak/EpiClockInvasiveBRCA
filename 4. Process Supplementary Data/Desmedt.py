@@ -66,7 +66,7 @@ LUMP_purity.to_csv(os.path.join(proj_dir, 'LUMP_purity.txt'), sep='\t')
 
 ## Save beta values of Clock sites for pure samples
 
-Clock_CpGs = np.loadtxt(os.path.join(consts['repo_dir'], 'Select_fCpGs', 'outputs', 'Clock_CpGs.txt'), dtype=str)
+Clock_CpGs = np.loadtxt(os.path.join(consts['repo_dir'], '3. Select fCpGs', 'outputs', 'Clock_CpGs.txt'), dtype=str)
 beta_values_Clock_CpGs_pureSamples = beta_values.loc[Clock_CpGs, pureSamples]
 beta_values_Clock_CpGs_pureSamples.to_csv(os.path.join(proj_dir, 'beta_values_Clock_CpGs_pureSamples.txt'), sep='\t')
 
