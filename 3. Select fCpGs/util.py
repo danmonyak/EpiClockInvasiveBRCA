@@ -16,7 +16,11 @@ import sys
 import EpiClockInvasiveBRCA.src.util as epi_util
 from EpiClockInvasiveBRCA.src.consts import consts
 
-## Defines acceptable ranges (inclusive) for each value
+############################################################
+"""
+Defines acceptable ranges (inclusive) for each value
+"""
+############################################################
 CLOCK_CRITERIA = {
     'normal':{
         'beta_nans':(0, 20),
@@ -27,12 +31,15 @@ CLOCK_CRITERIA = {
         'beta_means':(0.4, 0.6)
     }
 }
+############################################################
+############################################################
 
 def getNeutralDNACpGs():
     """
     Returns
     -------
-    List of "neutral" CpGs
+    neutral_DNA_CpG_list : list
+        List of "neutral" CpGs
         i.e. not associated with any gene or regulatory feature
     
     Notes
@@ -129,7 +136,8 @@ def addMeanStdsNans(data):
     
     Parameters
     ----------
-    data : dictionary returned by getDataDict
+    data : dict
+        Dictionary returned by getDataDict
     """
     
     for cohort in ['tumor', 'normal']:
@@ -147,19 +155,27 @@ def getCpG_list(data, criteria, starting_CpG_list=None, n_select=None, sample_ra
     
     Parameters
     ----------
-    data : dictionary returned by getDataDict
-    criteria : dictionary that defines acceptable ranges (inclusive) for each data type in each cohort
-    starting_CpG_list : CpGs to consider initially
-    n_select : number of CpGs to select; if None, return all CpGs that fit criteria
-    sample_rank : If n_select is not None, use stat_rank from this cohort to rank the tumors
-    stat_rank : If n_select is not None, use this stat from the sample_rank cohort to rank the tumors
-    good_end : 'higher' or 'lower' - which end of stat_rank should be selected if n_select is not None
+    data : dict
+        Dictionary returned by getDataDict
+    criteria : dict
+        Dictionary that defines acceptable ranges (inclusive) for each data type in each cohort
+    starting_CpG_list : list
+        CpGs to consider initially
+    n_select : numerical
+        Number of CpGs to select; if None, return all CpGs that fit criteria
+    sample_rank : str
+        If n_select is not None, use stat_rank from this cohort to rank the tumors
+    stat_rank : str
+        If n_select is not None, use this stat from the sample_rank cohort to rank the tumors
+    good_end : str
+        'higher' or 'lower' - which end of stat_rank should be selected if n_select is not None
     
     Returns
     -------
-    CpG_list : ndarray of names of CpGs that fit criteria
-               only include those in starting_CpG_list
-               limiting to n_select tumors, ranking using stat_rank in the sample cohort in sample_rank
+    CpG_list : ndarray
+        Array of names of CpGs that fit criteria
+        only include those in starting_CpG_list
+        limiting to n_select tumors, ranking using stat_rank in the sample cohort in sample_rank
     """
     
     if 'allCpGs' not in data:
@@ -188,13 +204,17 @@ def gen_CpG_set(data, neutral_DNA_CpG_list, n_select=500):
     
     Parameters
     ----------
-    data : dictionary returned by getDataDict
-    neutral_DNA_CpG_list : list of neutral CpGs returned by getNeutralDNACpGs
-    n_select : how many CpGs to return
+    data : dict
+        Dictionary returned by getDataDict
+    neutral_DNA_CpG_list : list
+        Neutral CpGs returned by getNeutralDNACpGs
+    n_select : numerical
+        How many CpGs to return
     
     Returns
     -------
-    Clock_CpGs : ndarray of names of CpGs that fit CLOCK_CRITERIA
+    Clock_CpGs : ndarray
+        Names of CpGs that fit CLOCK_CRITERIA
     """
     
     for cohort in ['tumor', 'normal']:
