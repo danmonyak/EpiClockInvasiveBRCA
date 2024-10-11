@@ -22,5 +22,12 @@
         "#3B3B3BFF",
         "#A73030FF",
         "#4A6990FF"
-    ]
+    ],
+    "sf": 0.4,
+    "labelfontsize": 25,
+    "ticksfontsize": 18,
+    "opacity": 0.8,
+    "linewidth": 1,
+    "fliersize": 1,
+    "s": 50
 }
