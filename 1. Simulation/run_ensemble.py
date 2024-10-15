@@ -32,12 +32,12 @@ prog_params = params_list[params_idx]
 
 # Constant parameters
 FLIP_RATE = 0.002
-GROWTH_RATE = 0.17
+PROLIF_RATE = 0.17
 
 os.makedirs(prog_params['output_dir'], exist_ok=True)
 
 init_params = {'flip_rate':FLIP_RATE, # flip rate per cell division per allele
-               'growth_rate':GROWTH_RATE, # cell divisions per day
+               'prolif_rate':PROLIF_RATE, # cell divisions per day
                'death_rate':prog_params['death_rate'], # cell deaths per day,
                'init_site_state_counts':[prog_params['n_CpGs_each'], prog_params['n_CpGs_each'], 0, prog_params['n_CpGs_each']],
               }

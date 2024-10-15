@@ -278,7 +278,7 @@ class Ensemble:
         
         """
         
-        n_divide, n_die, n_nothing = self.gen.multinomial(self.getNumCells(), pvals=[self.init_params['growth_rate'], self.init_params['death_rate'], 1 - self.init_params['growth_rate'] - self.init_params['death_rate']])
+        n_divide, n_die, n_nothing = self.gen.multinomial(self.getNumCells(), pvals=[self.init_params['prolif_rate'], self.init_params['death_rate'], 1 - self.init_params['prolif_rate'] - self.init_params['death_rate']])
         
         if die or (n_divide + n_nothing == 0):   # Tumor was eliminated
             print('Tumor died')

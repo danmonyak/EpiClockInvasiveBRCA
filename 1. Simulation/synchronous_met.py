@@ -20,7 +20,7 @@ from time import process_time
 import simulation as sim
 
 FLIP_RATE = 0.004
-GROWTH_RATE = 0.16
+PROLIF_RATE = 0.16
 DEATH_RATE = 0.14
 
 output_dir = 'synchro_met'
@@ -28,7 +28,7 @@ output_dir = 'synchro_met'
 os.makedirs(output_dir, exist_ok=True)
 
 init_params = {'flip_rate':FLIP_RATE, # flip rate per cell division per allele
-               'growth_rate':GROWTH_RATE, # cell divisions per day
+               'prolif_rate':PROLIF_RATE, # cell divisions per day
                'death_rate':DEATH_RATE, # cell deaths per day,
                'n_CpGs':90,
                'init_site_state_probs':[1/3, 1/3, 0, 1/3],

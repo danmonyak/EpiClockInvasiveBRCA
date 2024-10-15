@@ -21,7 +21,7 @@ import simulation as sim
 
 # Parameters
 FLIP_RATE = 0.002
-GROWTH_RATE = 0.17
+PROLIF_RATE = 0.17
 DEATH_RATE = 0.15
 
 output_dir = 'sc_met'
@@ -29,7 +29,7 @@ output_dir = 'sc_met'
 os.makedirs(output_dir, exist_ok=True)
     
 init_params = {'flip_rate':FLIP_RATE, # flip rate per cell division per allele
-               'growth_rate':GROWTH_RATE, # cell divisions per day
+               'prolif_rate':PROLIF_RATE, # cell divisions per day
                'death_rate':DEATH_RATE, # cell deaths per day,
                'n_CpGs':90,
                'init_site_state_probs':[1/3, 1/3, 0, 1/3],
