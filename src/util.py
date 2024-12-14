@@ -507,7 +507,7 @@ def saveCorrelationPlot(sample_annotations, var_y, var_x='c_beta', restrict=True
         use_samples = np.intersect1d(use_samples, sample_annotations.index[use_samples_mask])
     
     # Define final DataFrame for plotting
-    plot_data = sample_annotations.loc[use_samples_mask, [var_x, var_y]].dropna()
+    plot_data = sample_annotations.loc[use_samples, [var_x, var_y]].dropna()
     
     # Calculate Pearson correlation between variables
     res = getCorrelation(plot_data, var_x=var_x, var_y=var_y)
