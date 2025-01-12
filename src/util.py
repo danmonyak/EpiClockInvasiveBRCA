@@ -124,8 +124,8 @@ def getCorrelation(sample_annotations, var_x, var_y, use_samples=None, get_n_use
         Number of pairs of values used for the correlation
     """
     mask = ~sample_annotations[var_x].isna()
-    if only_pure:
-        mask &= sample_annotations['pure']
+#     if only_pure:
+#         mask &= sample_annotations['pure']
     if use_samples is not None:
         mask &= sample_annotations.index.isin(use_samples)
     df = sample_annotations.loc[mask]
