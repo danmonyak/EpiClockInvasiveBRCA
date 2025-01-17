@@ -1,5 +1,5 @@
 """
-Desmedt.py
+Reyngold.py
 =======
 Author - Daniel Monyak
 9-5-24
