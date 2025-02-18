@@ -221,6 +221,8 @@ def getCpG_list(data, criteria, starting_CpG_list=None, n_select=None, sample_ra
         data['allCpGs'] = data['tumor']['beta_values'].index.values
     if starting_CpG_list is None:
         starting_CpG_list = data['allCpGs']
+        
+    print(f'Starting with {len(starting_CpG_list)} CpGs')
     
     siteFilters = []
     for sample in criteria.keys():
@@ -233,6 +235,8 @@ def getCpG_list(data, criteria, starting_CpG_list=None, n_select=None, sample_ra
     criteria_CpGs = np.intersect1d(data['allCpGs'][combined_filter], starting_CpG_list)
     if n_select is None:
         return criteria_CpGs
+    
+    print(f'Picking {n_select} from with {len(criteria_CpGs)} resulting CpGs')
     
     return data[sample_rank][stat_rank].loc[criteria_CpGs].sort_values(ascending=(good_end == 'lower')).index[:n_select].values
 
@@ -256,7 +260,7 @@ def gen_CpG_set(data, neutral_DNA_CpG_list, n_select=500):
         Names of CpGs that fit CLOCK_CRITERIA
     """
     
-    for cohort in ['tumor', 'basal', 'luminal']:
+    for cohort in ['tumor', 'basal', 'luminal', 'normals']:
         data[cohort]['beta_values_SELECTION'] = data[cohort]['beta_values'][data[cohort]['pureSamples']]
     
     n_tumors = data['tumor']['beta_values_SELECTION'].shape[1]
