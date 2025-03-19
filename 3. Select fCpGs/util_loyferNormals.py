@@ -238,8 +238,38 @@ def getCpG_list(data, criteria, starting_CpG_list=None, n_select=None, sample_ra
     
     print(f'Picking {n_select} from with {len(criteria_CpGs)} resulting CpGs')
     
-    return data[sample_rank][stat_rank].loc[criteria_CpGs].sort_values(ascending=(good_end == 'lower')).index[:n_select].values
+    return getHighestRankedCpGs(data, n_select, sample_rank, stat_rank, good_end, criteria_CpGs)
 
+def getHighestRankedCpGs(data, n_select, sample_rank, stat_rank, good_end, criteria_CpGs):
+    """
+    Returns the highest ranked CpGs according to some criterion
+    
+    Parameters
+    ----------
+    data : dict
+        Dictionary returned by getDataDict
+    n_select : numerical
+        Number of CpGs to select
+    sample_rank : str
+        Cohort name (e.g. "tumor")
+        Use stat_rank from this cohort to rank the tumors
+    stat_rank : str
+        Statistic name (e.g. "beta_stds")
+        Use this stat from the sample_rank cohort to rank the tumors
+    good_end : str
+        "higher" or "lower" - which end of stat_rank should be selected
+    criteria_CpGs : ndarray
+        Array of names of highest ranked CpGs, ranking using stat_rank in the sample cohort in sample_rank
+        Length n_select
+    
+    Returns
+    -------
+    CpG_list : ndarray
+        Array of names of CpGs that fit criteria
+        only include those in starting_CpG_list
+        limiting to n_select tumors, ranking using stat_rank in the sample cohort in sample_rank
+    """
+    return data[sample_rank][stat_rank].loc[criteria_CpGs].sort_values(ascending=(good_end == 'lower')).index[:n_select].values
 
 def gen_CpG_set(data, neutral_DNA_CpG_list, n_select=500):
     """
