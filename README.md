@@ -47,11 +47,25 @@ Open src/consts.json in a text editor and insert appropriate paths for the follo
 - **TCGA_datadir** — Path to a directory that will hold the TCGA data (preferably a subdirectory of official_indir)
 - **Lund_datadir** - Path to a directory that will hold the Lund cohort data (preferably a subdirectory of official_indir)
 
+## 2. Supplementary Data Retrieval
+
 ## 3. Pipeline
 
-### 1.
+### 1. Simulation
 
-### 2.
+To run all simulations, do:
+```
+sh runAllSimulations.sh
+```
+
+### 2. TCGA Retrieval
+
+To retrieve the TCGA data and generate the HTML output, do:
+```
+Rscript -e "rmarkdown::render('Data_Prep.Rmd', output_format = 'html_document')"
+```
+
+or render Data_Prep.Rmd using RStudio
 
 ### 3.
 
