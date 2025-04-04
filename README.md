@@ -67,14 +67,40 @@ Rscript -e "rmarkdown::render('Data_Prep.Rmd', output_format = 'html_document')"
 
 or render Data_Prep.Rmd using RStudio
 
-### 3.
+### 3. Select fCpGs
 
-### 4.
+Run all cells in the Jupyter notebook "Select_fCpGs-Revision.ipynb"
 
-### 5.
+### 4. Process Supplementary Data
 
-### 6.
+To process all supplementary data, do:
+```
+sh processAllData.sh
+```
 
-### 7.
+### 5. Subtyping
 
-### 8.
+To calculate PAM50 subtype for the TCGA tumors, do:
+
+```
+Rscript "subtype.R"
+```
+
+### 6. Beta Mixture Model
+
+...
+
+### 7. Analysis
+
+**In this order:**
+
+Run all cells in:
+1. c_beta Analysis.ipynb
+2. Estimate ages.ipynb
+3. Multi-sample.ipynb
+
+
+To perform beta value adjustment and subsequent analysis, and generate the HTML output, render beta_adjustment.Rmd as previously described.
+
+To generate the GSEA related figures, render GSEA_Figure.Rmd.
+
