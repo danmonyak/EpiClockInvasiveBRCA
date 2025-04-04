@@ -47,20 +47,60 @@ Open src/consts.json in a text editor and insert appropriate paths for the follo
 - **TCGA_datadir** — Path to a directory that will hold the TCGA data (preferably a subdirectory of official_indir)
 - **Lund_datadir** - Path to a directory that will hold the Lund cohort data (preferably a subdirectory of official_indir)
 
+## 2. Supplementary Data Retrieval
+
 ## 3. Pipeline
 
-### 1.
+### 1. Simulation
 
-### 2.
+To run all simulations, do:
+```
+sh runAllSimulations.sh
+```
 
-### 3.
+### 2. TCGA Retrieval
 
-### 4.
+To retrieve the TCGA data and generate the HTML output, do:
+```
+Rscript -e "rmarkdown::render('Data_Prep.Rmd', output_format = 'html_document')"
+```
 
-### 5.
+or render Data_Prep.Rmd using RStudio
 
-### 6.
+### 3. Select fCpGs
 
-### 7.
+Run all cells in the Jupyter notebook "Select_fCpGs-Revision.ipynb"
 
-### 8.
+### 4. Process Supplementary Data
+
+To process all supplementary data, do:
+```
+sh processAllData.sh
+```
+
+### 5. Subtyping
+
+To calculate PAM50 subtype for the TCGA tumors, do:
+
+```
+Rscript "subtype.R"
+```
+
+### 6. Beta Mixture Model
+
+...
+
+### 7. Analysis
+
+**In this order:**
+
+Run all cells in:
+1. c_beta Analysis.ipynb
+2. Estimate ages.ipynb
+3. Multi-sample.ipynb
+
+
+To perform beta value adjustment and subsequent analysis, and generate the HTML output, render beta_adjustment.Rmd as previously described.
+
+To generate the GSEA related figures, render GSEA_Figure.Rmd.
+
