@@ -7,12 +7,12 @@ output:
     code_folding: "hide"
 params:
   data_dir: "../data/"
-  methyl_filename: "rds object containing methylation data" 
-  gene_filename: "rds object containing gene expression data"
-  purity_filename: "csv file containing purity estimates"
-  lookup_filename: "xlsx file containing CpG site specific beta values from WB"
-  cpg_filename: "csv file containing clock set fCpG"
-  cibersort_filename: "Cibersort_LM22_500perm_All_Tumors.csv"
+  methyl_filepath: "rds object containing methylation data" 
+  gene_filepath: "rds object containing gene expression data"
+  purity_filepath: "csv file containing purity estimates"
+  lookup_filepath: "xlsx file containing CpG site specific beta values from WB"
+  cpg_filepath: "csv file containing clock set fCpG"
+  cibersort_filepath: "Cibersort_LM22_500perm_All_Tumors.csv"
 editor_options: 
   markdown: 
     wrap: 72
@@ -37,7 +37,7 @@ gg_theme <- theme(panel.grid.major = element_blank(),
 
 ```{r read_methylation_from_gdc}
 brca.methyl <- tryCatch(readRDS(file.path(params$data_dir, 
-                                          params$methyl_filename)),
+                                          params$methyl_filepath)),
                         error = function(e) {
                           stop("must recreate the tumor methylation object")
                           })
@@ -49,7 +49,7 @@ cat("Dimensions of raw methylation data", dim(brca.methyl), "\n")
 
 ```{r read_rna_from_gdc}
 brca.seq <- readRDS(file.path(params$data_dir, 
-                              params$gene_filename))
+                              params$gene_filepath))
 cat("Dimensions of raw RNAseq data", dim(brca.seq), "\n")
 
 brca.seq_ensembl <- brca.seq$gene_id
@@ -71,7 +71,7 @@ LM22 B-mode batch correction, and 500 permutations.
 
 ```{r cibersor_read}
 cibersort <- read.csv(file.path(params$data_dir, 
-                                params$cibersort_filename))
+                                params$cibersort_filepath))
 idx <- match(substr(colnames(brca.methyl), 1L, 16L), substr(cibersort$Mixture, 1L, 16L))
 cibersort <- cibersort[idx[!is.na(idx)], ]
 cat("All current tumors are contained in the CIBERSORT results", 
@@ -88,7 +88,7 @@ Communications, 6, 8971.
 
 ```{r read_purity}
 purity_all <- read.csv(file.path(params$data_dir,
-                                 params$purity_filename))
+                                 params$purity_filepath))
 # keep only the breast cancers
 purity_breast <- purity_all[purity_all$Cancer.type == "BRCA", ]
 # removing columns "Cancer.type" and "X" (which is NA for breast)
@@ -105,7 +105,7 @@ purity_breast <- purity_breast[idx, ]
 
 ```{r clock_set_data}
 cpg_sites <- read.csv(file.path(params$data_dir, 
-                                params$cpg_filename),
+                                params$cpg_filepath),
                       header = FALSE)[, 1L]
 ```
 
@@ -217,7 +217,7 @@ in the $l^{th}$ cell-type taken from the WBC lookup table.
 #### Beta Value Lookup
 
 ```{r read_wbc_xlsx}
-lookup <- readxl::read_excel(file.path(params$data_dir, params$lookup_filename))
+lookup <- readxl::read_excel(file.path(params$data_dir, params$lookup_filepath))
 
 # keep only the 500 CpG sites of interest
 idx <- match(rownames(brca.methyl), lookup$ID_REF)
