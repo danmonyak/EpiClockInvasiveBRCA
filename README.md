@@ -2,7 +2,7 @@
 
 ## 1. Introduction
 
-The code in this repository can be used to generate all figures and results found in Monyak et al., 2024. Preprocessing of some of the data sources is performed by Python scripts, while all generation of figures and results must be done in Jupyter notebooks and R Markdown files.
+The code in this repository can be used to generate all figures and results found in Monyak et al. (2025). Preprocessing of some of the data sources is performed by Python scripts, while all generation of figures and results must be done in Jupyter notebooks and R Markdown files.
 
 Software requirements:
 - Python 3
@@ -60,12 +60,12 @@ sh runAllSimulations.sh
 
 ### 2. TCGA Retrieval
 
-To retrieve the TCGA data and generate the HTML output, do:
+To retrieve the TCGA data and generate the HTML output, set the header parameters accordingly in Data_Prep.Rmd, and in bash, do:
 ```
-Rscript -e "rmarkdown::render('Data_Prep.Rmd', output_format = 'html_document')"
+Rscript -e "rmarkdown::render('Data_Prep.Rmd', output_format = 'html_document', output_file = paste0('Data_Prep ', Sys.time(), '.html'))"
 ```
 
-or render Data_Prep.Rmd using RStudio
+It could take up to a few hours to run, though it will likely take less than 1 hour. This script should be run on a machine of at least 16 GB of memory.
 
 ### 3. Select fCpGs
 
@@ -88,7 +88,12 @@ Rscript "subtype.R"
 
 ### 6. Beta Mixture Model
 
-...
+To run the beta mixture model decomposition analysis on the TCGA and Lund data and generate the HTML output, set the header parameters accordingly in Fit_BetaMixture.Rmd, and in bash, do:
+```
+Rscript -e "rmarkdown::render('Fit_BetaMixture.Rmd', output_format = 'html_document', output_file = paste0('Fit_BetaMixture ', Sys.time(), '.html'))"
+```
+
+It should take no more than 10 minutes to render.
 
 ### 7. Analysis
 
@@ -100,7 +105,14 @@ Run all cells in:
 3. Multi-sample.ipynb
 
 
-To perform beta value adjustment and subsequent analysis, and generate the HTML output, render beta_adjustment.Rmd as previously described.
+To perform beta value adjustment and subsequent analysis, and generate the HTML output, set the header parameters accordingly in beta_adjustment.Rmd, and in bash, do:
 
-To generate the GSEA related figures, render GSEA_Figure.Rmd.
+```
+Rscript -e "rmarkdown::render('beta_adjustment.Rmd', output_format = 'html_document', output_file = paste0('beta_adjustment ', Sys.time(), '.html'))"
+```
 
+To generate the GSEA-related figures and generate the HTML output, set the header parameters accordingly in GSEA_Figure.Rmd, and in bash, do:
+
+```
+Rscript -e "rmarkdown::render('GSEA_Figure.Rmd', output_format = 'html_document', output_file = paste0('GSEA_Figure ', Sys.time(), '.html'))"
+```
