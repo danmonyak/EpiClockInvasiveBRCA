@@ -337,7 +337,7 @@ def saveBoxPlotNew(sample_annotations, var_cat, var_y='c_beta', restrict=True, u
     if var_y == 'c_beta':
         ax.set_ylabel('$c_β$', fontsize=labelfontsize * sf)
     elif var_y == 'c_beta_adj1':
-        ax.set_ylabel('$c_β^a$', fontsize=labelfontsize * sf)
+        ax.set_ylabel('$c_β^α$', fontsize=labelfontsize * sf)
     elif ylabel is not None:
         ax.set_ylabel(ylabel, fontsize=labelfontsize * sf)
 
@@ -346,7 +346,7 @@ def saveBoxPlotNew(sample_annotations, var_cat, var_y='c_beta', restrict=True, u
 
     # Add (n = ...) under each x-tick (category)
     ax.set_xticks(ax.get_xticks(),
-                  [group + f'\n(n = {(~(plot_data[var_y].isna()) & (plot_data[var_cat] == group)).sum()})' for group in use_groups])
+                  [str(group) + f'\n(n = {(~(plot_data[var_y].isna()) & (plot_data[var_cat] == group)).sum()})' for group in use_groups])
     
     # Set title
     # Default = sample_annotations.name
@@ -542,7 +542,7 @@ def saveCorrelationPlot(sample_annotations, var_y, var_x='c_beta', restrict=True
     if var_x == 'c_beta':
         ax.set_xlabel('$c_β$', fontsize=labelfontsize * sf)
     elif var_x == 'c_beta_adj1':
-        ax.set_xlabel('$c_β^a$', fontsize=labelfontsize * sf)
+        ax.set_xlabel('$c_β^α$', fontsize=labelfontsize * sf)
         
     # Save plot
     if outfile:
@@ -552,7 +552,8 @@ def saveCorrelationPlot(sample_annotations, var_y, var_x='c_beta', restrict=True
 def plotTumorWise(beta_values, CpG_list=None, sample_list=None, n_samps=30, ncols=3, suptitle='random pick of samples',
                   title_formats=None, xlabel='Beta', random_seed=None, outfile=False, outfile_name=None,
                   outdir='images', choose_random=True, color='blue', ylim=None, bins='auto', figsize=None,
-                  text_fontsize=None, ticksfontsize=None, opacity=None, sf=1, tight_layout_pad=1, kde=False):
+                  text_fontsize=None, ticksfontsize=None, opacity=None, sf=1, tight_layout_pad=1, kde=False,
+                  suptitle_y=0.99, suptitle_fontsize=20):
     """
     Create a panel of tumor-level histograms of beta values
     Can specify a list of CpGs to plot and/or a list of samples to plot
@@ -610,7 +611,11 @@ def plotTumorWise(beta_values, CpG_list=None, sample_list=None, n_samps=30, ncol
         tight_layout_pad argument to pass to fig.tight_layout
     kde : boolean
         True iff it should plot a kde curve
-    
+    suptitle_y : float
+        y parameter in fig.suptitle
+        relative height of suptitle
+    suptitle_fontsize : float
+        fontsize of suptitle
     """
     
     ########################
@@ -643,7 +648,7 @@ def plotTumorWise(beta_values, CpG_list=None, sample_list=None, n_samps=30, ncol
         fig, axes_arr = plt.subplots(nrows, ncols, figsize=(20, 3 + 3*nrows))
     else:
         fig, axes_arr = plt.subplots(nrows, ncols, figsize=np.array(figsize) * sf)
-    fig.suptitle(suptitle, y=0.99, fontsize=20, fontweight='bold')
+    fig.suptitle(suptitle, y=suptitle_y, fontsize=suptitle_fontsize, fontweight='bold')
     fig.tight_layout(pad=tight_layout_pad)
     
     # Iterate and plot all samples
