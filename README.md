@@ -49,6 +49,22 @@ Open src/consts.json in a text editor and insert appropriate paths for the follo
 
 ## 2. Supplementary Data Retrieval
 
+In the external file location (preferably Box), create directories with the name of each cohort, to which one should download the relevant data from Gene Expression Omnibus (GEO):
+- **Aurora**: GSE212370
+  - [Methylation](https://ftp.ncbi.nlm.nih.gov/geo/series/GSE212nnn/GSE212370/suppl/GSE212370%5F20220828%5FMethylationEPIC%5FGEO%5Fdata%5Fmatrix146.tsv.gz)
+  - Clinical - Download supplementary data directory [43018_2022_491_MOESM2_ESM](https://static-content.springer.com/esm/art%3A10.1038%2Fs43018-022-00491-x/MediaObjects/43018_2022_491_MOESM2_ESM.rar) from https://doi.org/10.1038/s43018-022-00491-x
+- **Desmedt**: GSE39451
+  - [Series Matrix](https://ftp.ncbi.nlm.nih.gov/geo/series/GSE39nnn/GSE39451/matrix/GSE39451-GPL13534_series_matrix.txt.gz)
+- **Germany**: GSE69914
+  - [Series Matrix](https://ftp.ncbi.nlm.nih.gov/geo/series/GSE69nnn/GSE69914/matrix/GSE69914_series_matrix.txt.gz)
+- **Lund**: GSE25307
+  - [Methylation](https://ftp.ncbi.nlm.nih.gov/geo/series/GSE25nnn/GSE25307/matrix/GSE25307_series_matrix.txt.gz)
+  - [Clinical](https://ftp.ncbi.nlm.nih.gov/geo/series/GSE25nnn/GSE25307/suppl/GSE25307%5Fsample%5Fannotations.txt.gz)
+- **Luo**: GSE106360
+  - [Series Matrix](https://ftp.ncbi.nlm.nih.gov/geo/series/GSE106nnn/GSE106360/matrix/GSE106360_series_matrix.txt.gz)
+- **Reyngold**: GSE58999
+  - [Series Matrix](https://ftp.ncbi.nlm.nih.gov/geo/series/GSE58nnn/GSE58999/matrix/GSE58999_series_matrix.txt.gz)
+
 ## 3. Pipeline
 
 ### 1. Simulation
