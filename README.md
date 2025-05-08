@@ -65,6 +65,8 @@ To retrieve the TCGA data and generate the HTML output, set the header parameter
 Rscript -e "rmarkdown::render('Data_Prep.Rmd', output_format = 'html_document', output_file = paste0('Data_Prep ', Sys.time(), '.html'))"
 ```
 
+It could take up to a few hours to run, though it will likely take less than 1 hour. This script should be run on a machine of at least 16 GB of memory.
+
 ### 3. Select fCpGs
 
 Run all cells in the Jupyter notebook "Select_fCpGs-Revision.ipynb"
@@ -91,7 +93,7 @@ To run the beta mixture model decomposition analysis on the TCGA and Lund data a
 Rscript -e "rmarkdown::render('Fit_BetaMixture.Rmd', output_format = 'html_document', output_file = paste0('Fit_BetaMixture ', Sys.time(), '.html'))"
 ```
 
-or render/knit Fit_BetaMixture.Rmd using RStudio
+It should take no more than 10 minutes to render.
 
 ### 7. Analysis
 
@@ -109,7 +111,7 @@ To perform beta value adjustment and subsequent analysis, and generate the HTML 
 Rscript -e "rmarkdown::render('beta_adjustment.Rmd', output_format = 'html_document', output_file = paste0('beta_adjustment ', Sys.time(), '.html'))"
 ```
 
-To generate the GSEA related figures and generate the HTML output, set the header parameters accordingly in GSEA_Figure.Rmd, and in bash, do:
+To generate the GSEA-related figures and generate the HTML output, set the header parameters accordingly in GSEA_Figure.Rmd, and in bash, do:
 
 ```
 Rscript -e "rmarkdown::render('GSEA_Figure.Rmd', output_format = 'html_document', output_file = paste0('GSEA_Figure ', Sys.time(), '.html'))"
