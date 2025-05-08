@@ -17,6 +17,7 @@ params:
   methyl_filename: "TCGA.methyl"
   gene_filename: "TCGA.rnaseq"
   cnv_filename: "TCGA.cnv"
+  mutation_filename: "TCGA.mutation"
 ---
 
 ```{r setup, include=FALSE}
@@ -84,6 +85,11 @@ query_clinical$reason_purity <- !has_purity
 reasons <- c(reasons, "reason_purity")
 
 common_tumors <- intersect(methyl_tumor_ids, purity_tumor_ids[high_purity])
+
+# Merge CPE data into query_clinical
+# purity_data$Patient.ID <- purity_participant_ids
+# query_clinical <- merge(query_clinical, purity_data[, c('Patient.ID', 'CPE')],
+#         by.x='submitter_id', by.y='Patient.ID', all.x=T)
 ```
 For the `r length(participant_subset)` participants of interest, there are `r length(common_tumors)` tumors with methylation data and CPE purity $\ge 0.6$. There are `r sum(duplicated(substr(common_tumors, 1L, params$participant_id_length)))` duplicated participant ids in this tumor subset.
 
@@ -168,7 +174,8 @@ query_gene <- GDCquery(project = params$project,
                        workflow.type = 'STAR - Counts',
                        experimental.strategy = "RNA-Seq",
                        sample.type = c("Primary Tumor"),
-                       barcode = query_clinical$submitter_id[query_clinical$in_analysis_dataset])
+                       barcode =
+                         query_clinical$submitter_id[query_clinical$in_analysis_dataset])
 
 gene_participant_ids <- substr(getResults(query_gene, cols = "cases"), 1L, params$participant_id_length)
 gene_tumor_ids <- substr(getResults(query_gene, cols = "cases"), 1L, params$tumor_id_length)
@@ -185,7 +192,8 @@ query_cnv <- GDCquery(project = params$project,
                       platform = c("Affymetrix SNP 6.0"),
                       sample.type = c("Primary Tumor"),
                       data.type = "Copy Number Segment",
-                      barcode = query_clinical$submitter_id[query_clinical$in_analysis_dataset])
+                      barcode =
+                        query_clinical$submitter_id[query_clinical$in_analysis_dataset])
 cnv_participant_ids <- substr(getResults(query_cnv, cols = "cases"), 1L, params$participant_id_length)
 cnv_tumor_ids <- substr(getResults(query_cnv, cols = "cases"), 1L, params$tumor_id_length)
 
@@ -193,6 +201,17 @@ multiple_cnv_measurements <- getResults(query_cnv, cols = "cases")[duplicated(cn
 multiple_cnv_measurements
 ```
 For the `r sum(query_clinical$in_analysis_dataset)` participants in the analysis dataset, `r length(unique(cnv_tumor_ids))` CNV datasets are available. There are `r sum(duplicated(cnv_participant_ids))` duplicated participant ids in the CNV dataset and `r sum(duplicated(cnv_tumor_ids))` duplicated tumor ids.
+
+
+#### Query Mutation Data
+```{r query_mutation_data}
+query_mutation <- GDCquery(project = params$project, 
+                  data.category = "Simple Nucleotide Variation",
+                  data.type = "Masked Somatic Mutation",
+                  barcode =
+                    query_clinical$submitter_id[query_clinical$in_analysis_dataset]
+)
+```
 
 #### Download and Save
 
@@ -300,7 +319,80 @@ if (params$save_data_as_rds) saveRDS(cnv,
 rm(cnv, data.cnv, query_cnv)
 ```
 
+
+##### Mutation Data
+
+```{r download_and_save_mutation, eval = params$save_data}
+# download and save the DNA mutation data
+GDCdownload(query_mutation, directory = paste0(save_path, params$GDCdata_dir))
+data.mutation <- GDCprepare(query_mutation, 
+                            directory = paste0(save_path, params$GDCdata_dir))
+
+# subset to the specific tumors
+keep_samples <- substr(data.mutation$Tumor_Sample_Barcode, 1L, params$tumor_id_length) %in% common_tumors
+mutation <- data.mutation[keep_samples, ]
+
+write.table(mutation, 
+            file = paste0(save_path, params$mutation_filename, ".tsv"), 
+            sep = "\t")
+if (params$save_data_as_rds) saveRDS(mutation, 
+                                     file = paste0(save_path, 
+                                                   params$mutation_filename, 
+                                                   ".rds"))
+rm(mutation, data.mutation, query_mutation)
+```
+
+##### Get IHC data
+
+```{r get_ihc_data, eval = params$save_data}
+query_clinical_general <- GDCquery(
+    project = params$project,
+    data.category = "Clinical",
+    data.type = "Clinical Supplement",
+    data.format = "BCR XML",
+    barcode = query_clinical$submitter_id[query_clinical$in_analysis_dataset]
+)
+
+# Download the IHC
+GDCdownload(query_clinical_general, directory = paste0(save_path, params$GDCdata_dir))
+# Import follow up data
+clinical_ihc <- GDCprepare_clinic(query_clinical_general, clinical.info = "patient", 
+                                  directory = paste0(save_path, params$GDCdata_dir))
+clinical_ihc <- clinical_ihc[,
+                  c('bcr_patient_barcode',
+                    'breast_carcinoma_estrogen_receptor_status',
+                    'breast_carcinoma_progesterone_receptor_status',
+                    'lab_proc_her2_neu_immunohistochemistry_receptor_status')
+             ]
+query_clinical <- merge(query_clinical, clinical_ihc,
+                                by.x='submitter_id', by.y='bcr_patient_barcode',
+                                all.x=T)
+
+
+query_clinical$breast_carcinoma_estrogen_receptor_status <-
+  as.character(query_clinical$breast_carcinoma_estrogen_receptor_status)
+query_clinical$breast_carcinoma_progesterone_receptor_status <-
+  as.character(query_clinical$breast_carcinoma_progesterone_receptor_status)
+query_clinical$lab_proc_her2_neu_immunohistochemistry_receptor_status <-
+  as.character(query_clinical$lab_proc_her2_neu_immunohistochemistry_receptor_status)
+
+# Drop problematic column
+query_clinical <- query_clinical[, names(query_clinical) != 'sites_of_involvement']
+```
+
 ```{r download_and_save_clinical, eval = params$save_data}
+# Add sampleID column
+sample.patient.IDs <- data.frame(
+  Sample.ID = common_tumors,
+  Patient.ID = substr(common_tumors, 1L, params$participant_id_length)
+  )
+query_clinical <- merge(query_clinical, sample.patient.IDs,
+                        by.x='submitter_id', by.y='Patient.ID', all.x=T)
+
+# Add purity data
+query_clinical <- merge(query_clinical, purity_data[, c('Sample.ID', 'CPE')],
+                        by='Sample.ID', all.x=T)
+
 # save the clinical data
 write.table(query_clinical, file = paste0(save_path, params$clinical_filename, ".tsv"), sep = "\t")
 if (params$save_data_as_rds) saveRDS(query_clinical, 
