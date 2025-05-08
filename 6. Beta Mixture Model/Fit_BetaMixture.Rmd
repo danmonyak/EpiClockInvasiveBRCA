@@ -6,25 +6,41 @@ output:
   html_document:
     code_folding: "hide"
 params:
-  # cloud_path: "~/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/"
-  # data_dir: "MolClock_Paper_1/1. Analytic Datasets/TCGA/"
-  # data_dir_lund: "MolClock_Paper_1/1. Analytic Datasets/Lund/"
-  outdir: 'Beta Peak Decomposition',
-  working_dir: "~/Desktop/FromDesktop_2bsorted/cibersort/"
-  methyl_filename: "TCGA.methyl"
-  clinical_filename: "TCGA.clinical"
+  recreate_TCGA: TRUE # Recreate results for TCGA cohort
+  recreate_Lund: TRUE # Recreate results for Lund cohort
+  report_updates: TRUE # Report if the existing results files match the results generated here 
+  # If they do, then output a new RDS file with the date and time in the filename
+  outdir_name: 'Beta Peak Decomposition' # Output directory in external data storage
+  TCGA_methyl_filename: "TCGA.methyl.Clock_revision" # Base name of TSV file with TCGA beta values
+  Lund_methyl_filename: "beta_values_Clock_CpGs_revision_pureSamples" # Base name of TSV file with Lund beta values
+  TCGA_clinical_filename: "TCGA.clinical" # Base name of RDS file with TCGA clinical data
+  TCGA_output_filename: "tcga_beta_mixture_model_revision.rds" # Output file name of TCGA results
+  Lund_output_filename: "lund_beta_mixture_model_revision.rds" # Output file name of Lund results
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-source("./my_BetaMixture.R")
+source("BetaMixture_0.5.2.R")
 library(ggsci)
 library(ggplot2)
-```
+library(jsonlite)
 
-```{r retrieve_CpG_site}
-cpg_sites <- read.csv(paste0(params$working_dir, "balanced_CpGs_final_set.txt"),
-                      header = FALSE)[, 1L]
+consts <- read_json(file.path(repo_dir, 'src', 'consts.json'))
+
+# Import DNA methlation data table
+# Set column and row names correctly
+# Convert data to floats
+importMethylTable <- function(methyl.path) {
+    methyl <- read.table(methyl.path, sep='\t', header=F)
+    names(methyl) <- methyl[1L, ]
+    methyl <- methyl[-1L, ]
+    rownames(methyl) <- methyl[, 1L]
+    methyl <- methyl[, -1L]
+    for (j in (1:ncol(methyl))) {
+      methyl[, j] <- as.numeric(methyl[, j])
+    }
+    methyl
+  }
 ```
 
 ## TCGA
@@ -46,46 +62,59 @@ Package available on R-Forge. Required modification of a testing criteria
 to avoid floating point issue (`sum(x) == 1` vs `isTRUE(all.equal(sum(x), 1.0))`)
 
 ```{r TCGA_beta_mixture_model}
-betaMixture_TCGA <- tryCatch(readRDS(file.path(consts['TCGA_datadir'],
-                                            "tcga_beta_mixture_model.rds")),
-                             error = function(e) { NULL })
+########################################################
+outdirpath <- file.path(consts[['official_indir']], params$outdir_name, 'TCGA')
+if (!dir.exists(outdirpath)) {
+  dir.create(outdirpath, recursive = TRUE)
+}
+########################################################
 
-
-if (is.null(betaMixture_TCGA)) {
+if (params$recreate_TCGA) {
+  cat("Rerunning TCGA Beta Decomposition\n")
   TCGA_clinical <- readRDS(file.path(consts['TCGA_datadir'],
-                                  paste0(params$clinical_filename, ".rds")))
+                                  paste0(params$TCGA_clinical_filename, ".rds")))
   
   analysis_tumors <- TCGA_clinical$in_analysis_dataset
   
-  brca.methyl <- readRDS(file.path(consts['TCGA_datadir'],
-                                paste0(params$methyl_filename, ".rds")))
-  keep <- substr(colnames(brca.methyl), 1, 12L) %in% TCGA_clinical$submitter_id[analysis_tumors]
+  TCGA.methyl <- importMethylTable(file.path(consts['TCGA_datadir'],
+                                  paste0(params$TCGA_methyl_filename, ".tsv")))
   
-  brca.methyl <- brca.methyl[, keep]
   
-  # we are fitting only the 500 CpG sites
-  brca.methyl <- brca.methyl[rownames(brca.methyl) %in% cpg_sites, ]
-
-  alpha <- matrix(0.0, ncol(brca.methyl), 3L)
-  delta <- matrix(0.0, ncol(brca.methyl), 3L)
+  keep <- substr(colnames(TCGA.methyl), 1, 12L) %in% TCGA_clinical$submitter_id[analysis_tumors]
+  
+  TCGA.methyl <- TCGA.methyl[, keep]
+  
+  ########################################################  
+  too_many_na_values <- colMeans(is.na(TCGA.methyl)) >= 0.05
+  TCGA.methyl <- TCGA.methyl[, !too_many_na_values]
+  cat(ncol(TCGA.methyl), " tumors; removed ", sum(too_many_na_values), "due to NA content", "\n")
+  ########################################################  
+  alpha <- matrix(0.0, ncol(TCGA.methyl), 3L, 
+                  dimnames = list(colnames(TCGA.methyl), NULL))
+  delta <- matrix(0.0, ncol(TCGA.methyl), 3L, 
+                  dimnames = list(colnames(TCGA.methyl), NULL))
   z <- list()
-  track_number_removed_TCGA <- numeric(ncol(brca.methyl))
-  for (i in 1L:ncol(brca.methyl)) {
+  phi <- matrix(0.0, ncol(TCGA.methyl), 3L)
+  track_number_removed_TCGA <- numeric(ncol(TCGA.methyl))
+  track_number_extrema_TCGA <- numeric(ncol(TCGA.methyl))
+  for (i in 1L:ncol(TCGA.methyl)) {
     
-    are_na <- is.na(brca.methyl[, i])
-    rm_extremes <- !are_na & {brca.methyl[, i] <= 0.98 & brca.methyl[, i] >= 0.02}
+    are_na <- is.na(TCGA.methyl[, i])
+    rm_extremes <- !are_na & {TCGA.methyl[, i] <= 0.98 & TCGA.methyl[, i] >= 0.02}
     track_number_removed_TCGA[i] <- sum(!rm_extremes)
-    
-    res <- tryCatch(suppressWarnings(BetaMixture_my(brca.methyl[rm_extremes, i], K = 3, 
-                                                    forever = 1500,
-                                                    debug = FALSE,
-                                                    epsilon = 1e-3, 
-                                                    relative = 1e-3)),
+    track_number_extrema_TCGA[i] <- sum(!are_na & {
+      TCGA.methyl[, i] > 0.98 | TCGA.methyl[, i] < 0.02})
+   
+    res <- tryCatch(suppressWarnings(BetaMixture(TCGA.methyl[rm_extremes, i], K = 3, 
+                                                 forever = 1500,
+                                                 debug = FALSE,
+                                                 epsilon = 1e-3, 
+                                                 relative = 1e-3)),
                     error = function(e) {
-                      message(i, " ", sum(is.na(brca.methyl[, i])), " ", e$message)
+                      message(i, " ", sum(is.na(TCGA.methyl[, i])), " ", e$message)
                       stop("T")
                       })
-    
+    hist(res, main = paste("Tumor ", colnames(TCGA.methyl)[i]))
     if (is.null(res)) next
     if (!res@converged) {
       message(i, " ", res@converged)
@@ -93,52 +122,114 @@ if (is.null(betaMixture_TCGA)) {
     alpha[i, ] <- res@mle[1L, ]
     delta[i, ] <- res@mle[2L, ]
     z[[i]] <- res@Z
+    phi[i, ] <- res@phi
+  }
+  names(z) <- colnames(TCGA.methyl)
+  rownames(phi) <- colnames(TCGA.methyl)
+  names(track_number_removed_TCGA) <- colnames(TCGA.methyl)
+  
+  ########################################################  
+  ############# Saving results as R object ###############
+  ########################################################
+  TCGA_output_filepath <- file.path(outdirpath, params$TCGA_output_filename)
+  
+  # Collect old results
+  if (params$report_updates) {
+    ident.vec <- NULL
+    if (file.exists(TCGA_output_filepath)) {
+      prev.results <- readRDS(TCGA_output_filepath)
+      
+      # Compare all data objects
+      identical.all <- all(c(
+        identical(prev.results$alpha, alpha),
+        identical(prev.results$delta, delta),
+        identical(prev.results$Z, z),
+        identical(prev.results$n_dropped_sites, track_number_removed_TCGA),
+        identical(prev.results$phi, phi)
+        ))
+      
+      if (identical.all) {
+        print('Results DO match previously saved results, resaving anyway')
+      } else{
+        print('Results do not match previously saved results')
+  
+        TCGA_output_filepath <- paste(c(TCGA_output_filepath, as.character(Sys.time())), collapse='.')
+        sprintf('Will not override, saving results instead as %s', TCGA_output_filepath)
+      }
+    }
   }
   
-  saveRDS(list(alpha = alpha, delta = delta, Z = z), 
-          file = file.path(consts['TCGA_datadir'], 'Beta Peak Decomposition', 'TCGA',
-                        "tcga_beta_mixture_model.rds"))
+  # Save results in R data object just in case
+  saveRDS(list(alpha = alpha, delta = delta, Z = z, 
+               n_dropped_sites = track_number_removed_TCGA,
+               phi = phi), 
+          file = TCGA_output_filepath)
+  
+  ########################################################
+  ########## Output results as readable tables ###########
+  ########################################################
+  write.table(alpha, file.path(outdirpath, 'alpha.txt'), quote=F)
+  write.table(delta, file.path(outdirpath, 'delta.txt'), quote=F)
+  write.table(phi, file.path(outdirpath, 'phi.txt'), quote=F)
+  
+  modes <- (alpha - 1)/(alpha + delta - 2)
+  write.table(modes, file.path(outdirpath, 'modes.txt'), quote = F)
+  ########################################################
+  ########################################################
   
   print(table(track_number_removed_TCGA))
+  print(table(track_number_extrema_TCGA))
+  sprintf('Total # extreme values removed: %d', sum(track_number_extrema_TCGA))
 }
 ```
 
 ## Lund Data
 
-```{r get_lund_data}
-lund.methyl <- read.csv(file.path(consts['Lund_datadir'], 
-                                  "beta_values_FULL_balanced_CpGs.txt"), sep = "\t")
-rownames(lund.methyl) <- lund.methyl[, 1L]
-lund.methyl <- lund.methyl[, -1L]
-```
-
 ```{r Lund_beta_mixture_model}
-betaMixture_Lund<- tryCatch(readRDS(file.path(consts['Lund_datadir'],
-                                              "lund_beta_mixture_model.rds")),
-                               error = function(e) { NULL })
+########################################################
+outdirpath <- file.path(consts[['official_indir']], params$outdir_name, 'Lund')
+if (!dir.exists(outdirpath)) {
+  dir.create(outdirpath, recursive = TRUE)
+}
+########################################################
 
-if (is.null(betaMixture_Lund)) {
+if (params$recreate_Lund) {
+  cat("Rerunning Lund Beta Decomposition\n")
   
-  alpha <- matrix(0.0, ncol(lund.methyl), 3L)
-  delta <- matrix(0.0, ncol(lund.methyl), 3L)
+  Lund.methyl <- importMethylTable(file.path(consts['Lund_datadir'],
+                                  paste0(params$Lund_methyl_filename, ".tsv")))
+
+  ########################################################  
+  too_many_na_values <- colMeans(is.na(Lund.methyl)) >= 0.05
+  Lund.methyl <- Lund.methyl[, !too_many_na_values]
+  cat(ncol(Lund.methyl), " tumors; removed ", sum(too_many_na_values), "due to NA content", "\n")
+  ########################################################  
+  alpha <- matrix(0.0, ncol(Lund.methyl), 3L,
+                  dimnames = list(colnames(Lund.methyl), NULL))
+  delta <- matrix(0.0, ncol(Lund.methyl), 3L,
+                  dimnames = list(colnames(Lund.methyl), NULL))
   z <- list()
-  track_number_removed_Lund <- numeric(ncol(lund.methyl))
-  for (i in 1L:ncol(lund.methyl)) {
+  phi <- matrix(0.0, ncol(Lund.methyl), 3L)
+  track_number_removed_Lund <- numeric(ncol(Lund.methyl))
+  track_number_extrema_Lund <- numeric(ncol(Lund.methyl))
+  for (i in 1L:ncol(Lund.methyl)) {
     
-    are_na <- is.na(lund.methyl[, i])
-    rm_extremes <- !are_na & {lund.methyl[, i] <= 0.98 & lund.methyl[, i] >= 0.02}
+    are_na <- is.na(Lund.methyl[, i])
+    rm_extremes <- !are_na & {Lund.methyl[, i] <= 0.98 & Lund.methyl[, i] >= 0.02}
     track_number_removed_Lund[i] <- sum(!rm_extremes)
-    
-    res <- tryCatch(suppressWarnings(BetaMixture_my(lund.methyl[rm_extremes, ], K = 3, 
-                                                    forever = 1500,
-                                                    debug = FALSE,
-                                                    epsilon = 1e-3, 
-                                                    relative = 1e-3)),
+    track_number_extrema_Lund[i] <- sum(!are_na & {
+      Lund.methyl[, i] > 0.98 | Lund.methyl[, i] < 0.02})
+    res <- tryCatch(suppressWarnings(BetaMixture(Lund.methyl[rm_extremes, i], K = 3, 
+                                                 forever = 1500,
+                                                 debug = FALSE,
+                                                 epsilon = 1e-3, 
+                                                 relative = 1e-3)),
                     error = function(e) {
-                      message(i, " ", sum(is.na(lund.methyl[, i])), " ", e$message)
+                      message(i, " ", sum(is.na(Lund.methyl[, i])), " ", e$message)
                       stop("T")
                     })
   
+    hist(res, main = paste("Tumor ", colnames(Lund.methyl)[i]))
     if (is.null(res)) next
     if (!res@converged) {
       message(i, " ", res@converged)
@@ -146,12 +237,65 @@ if (is.null(betaMixture_Lund)) {
     alpha[i, ] <- res@mle[1L, ]
     delta[i, ] <- res@mle[2L, ]
     z[[i]] <- res@Z
+    phi[i, ] <- res@phi
+  }
+  names(z) <- colnames(Lund.methyl)
+  rownames(phi) <- colnames(Lund.methyl)
+  names(track_number_removed_Lund) <- colnames(Lund.methyl)
+  
+  ########################################################  
+  ############# Saving results as R object ###############
+  ########################################################
+  
+  Lund_output_filepath <- file.path(outdirpath, params$Lund_output_filename)
+    
+  
+  # Collect old results
+  if (params$report_updates) {
+    ident.vec <- NULL
+    if (file.exists(Lund_output_filepath)) {
+      prev.results <- readRDS(Lund_output_filepath)
+      
+      # Compare all data objects
+      identical.all <- all(c(
+        identical(prev.results$alpha, alpha),
+        identical(prev.results$delta, delta),
+        identical(prev.results$Z, z),
+        identical(prev.results$n_dropped_sites, track_number_removed_Lund),
+        identical(prev.results$phi, phi)
+      ))
+      
+      if (identical.all) {
+        print('Results DO match previously saved results, resaving anyway')
+      } else{
+        print('Results do not match previously saved results')
+        
+        Lund_output_filepath <- paste(c(Lund_output_filepath, as.character(Sys.time())), collapse='.')
+        sprintf('Will not override, saving results instead as %s', Lund_output_filepath)
+      }
+    }
   }
   
-  saveRDS(list(alpha = alpha, delta = delta, Z = z), 
-          file = file.path(consts['TCGA_datadir'], 'Beta Peak Decomposition', 'Lund'
-                        "lund_beta_mixture_model.rds"))
+  # Save results in R data object just in case
+  saveRDS(list(alpha = alpha, delta = delta, Z = z, 
+               n_dropped_sites = track_number_removed_Lund,
+               phi = phi), 
+          file = file.path(outdirpath, params$Lund_output_filename))
+  
+  ########################################################
+  ########## Output results as readable tables ###########
+  ########################################################
+  write.table(alpha, file.path(outdirpath, 'alpha.txt'), quote=F)
+  write.table(delta, file.path(outdirpath, 'delta.txt'), quote=F)
+  write.table(phi, file.path(outdirpath, 'phi.txt'), quote=F)
+  
+  modes <- (alpha - 1)/(alpha + delta - 2)
+  write.table(modes, file.path(outdirpath, 'modes.txt'), quote = F)
+  ########################################################
+  ########################################################
   
   print(table(track_number_removed_Lund))
+  print(table(track_number_extrema_Lund))
+  sprintf('Total # extreme values removed: %d', sum(track_number_extrema_Lund))
 }
 ```
