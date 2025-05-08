@@ -27,8 +27,15 @@ params_list = [
     {'output_dir':'3_sites', 'n_CpGs_each':1, 'death_rate':0.15, 'nyears':2, 'seed':0},
     {'output_dir':'90_sites', 'n_CpGs_each':30, 'death_rate':0.15, 'nyears':2, 'seed':0},
     {'output_dir':'larger_death_rate', 'n_CpGs_each':1, 'death_rate':0.16, 'nyears':4, 'seed':0},
+    ### New simulations
+    # delete
+    # {'output_dir':'90_sites_seed1', 'n_CpGs_each':30, 'death_rate':0.15, 'nyears':2, 'seed':1},
+    # {'output_dir':'90_sites_seed2', 'n_CpGs_each':30, 'death_rate':0.15, 'nyears':2, 'seed':2},
+    # {'output_dir':'90_sites_seed3', 'n_CpGs_each':30, 'death_rate':0.15, 'nyears':2, 'seed':3},
 ]
 prog_params = params_list[params_idx]
+
+print(f'Running simulation with the following parameters: {prog_params}')
 
 # Constant parameters
 FLIP_RATE = 0.002
