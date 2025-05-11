@@ -45,7 +45,7 @@ Open src/consts.json in a text editor and insert appropriate paths for the follo
 - **repo_dir** — Path to the repository (same as the R variable "repo_dir" in the previous step)
 - **official_indir** — Path to a directory in an external file location (preferably Box) that can hold terabytes of data
 - **TCGA_datadir** — Path to a directory that will hold the TCGA data (preferably a subdirectory of official_indir)
-- **Lund_datadir** - Path to a directory that will hold the Lund cohort data (preferably a subdirectory of official_indir)
+- **Lund_datadir** — Path to a directory that will hold the Lund cohort data (preferably a subdirectory of official_indir)
 
 ## 2. Supplementary Data Retrieval
 
