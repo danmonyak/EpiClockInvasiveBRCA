@@ -1,0 +1,104 @@
+---
+title: "EpiScore"
+author: "Daniel Monyak"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    code_folding: "hide"
+editor_options: 
+  markdown: 
+    wrap: 72
+params:
+  loadAvgData: True
+---
+
+```{r, warning=F, message=F}
+## Load packages and import data
+
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(jsonlite)
+library(EpiSCORE)
+library(kableExtra)
+data(BreastRef)
+
+consts <- read_json(file.path(repo_dir, 'src', 'consts.json'))
+
+if (params$loadAvgData) {
+  avBRCA.m <- readRDS(file.path(consts[['TCGA_datadir']], 'TCGA.avBRCA.m.rds'))
+} else{
+  dataBRCA.m <- readRDS(file.path(consts[['TCGA_datadir']], 'TCGA.methyl.rds'))
+  
+  # Construct a DNAm matrix at gene-promoter level
+  avBRCA.m <- constAvBetaTSS(dataBRCA.m, type="450k")
+  saveRDS(avBRCA.m, file.path(consts[['TCGA_datadir']], 'TCGA.avBRCA.m.rds'))
+}
+```
+
+
+```{r, warning=F, message=F}
+# Estimation of cell-type fractions using a DNAm reference matrix
+estF.o <- wRPC(avBRCA.m,
+               ref=mrefBreast.m,
+               useW=TRUE, wth=0.4, maxit=200 # Parameters used in tutorial vignette
+               )
+celltype.fractions <- estF.o$estF
+```
+
+## First 6 rows of output
+
+```{r}
+head(celltype.fractions) |> kable()
+```
+
+```{r, warning=F, message=F}
+
+keepN_fields <- function(x, n) {
+  fields <- strsplit(x, "-")[[1]]
+  paste(fields[1:n], collapse = "-")
+}
+getParticipantIDs <- function(fullTumorIDs) {
+  sapply(fullTumorIDs, function (x) keepN_fields(x, 3), USE.NAMES=F)
+}
+getTumorIDs <- function(fullTumorIDs) {
+  sapply(fullTumorIDs, function (x) keepN_fields(x, 4), USE.NAMES=F)
+}
+
+clinical <- read.table(file.path(
+  consts['TCGA_datadir'],
+  'TCGA.clinical.annotated_revision.tsv'), sep='\t',
+  header=T)
+
+rownames(celltype.fractions) <- getTumorIDs(rownames(celltype.fractions))
+
+# No tumors are duplicated
+# print(any(duplicated(rownames(celltype.fractions))))
+# [1] FALSE
+
+celltype.fractions <- merge(celltype.fractions,
+                            clinical[, c('Sample.ID', 'CPE', 'c_beta')],
+                            by.x=0, by.y='Sample.ID', all.x=T)
+celltype.fractions$Epithelial <- celltype.fractions$Basal + celltype.fractions$Luminal
+```
+
+## Summary table of epithelial
+
+Epithelial = Luminal + Basal
+```{r}
+format(as.data.frame(t(as.matrix(summary(celltype.fractions$Epithelial)))), digits=2) |>
+  kable()
+```
+
+## Epithelial vs. CPE as a purity measure
+```{r}
+celltype.fractions %>%
+  ggplot(aes(x=CPE, y=Epithelial)) +
+  geom_point(color='darkred', size=1) +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +
+  theme_classic() + 
+  xlim(0, 1) + ylim(0, 1)
+
+summary(lm(Epithelial ~ CPE, data=celltype.fractions))
+```
+
