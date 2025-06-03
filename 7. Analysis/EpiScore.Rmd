@@ -25,6 +25,19 @@ data(BreastRef)
 
 consts <- read_json(file.path(repo_dir, 'src', 'consts.json'))
 
+### Helper functions
+keepN_fields <- function(x, n) {
+  fields <- strsplit(x, "-")[[1]]
+  paste(fields[1:n], collapse = "-")
+}
+getParticipantIDs <- function(fullTumorIDs) {
+  sapply(fullTumorIDs, function (x) keepN_fields(x, 3), USE.NAMES=F)
+}
+getTumorIDs <- function(fullTumorIDs) {
+  sapply(fullTumorIDs, function (x) keepN_fields(x, 4), USE.NAMES=F)
+}
+########################
+
 if (params$loadAvgData) {
   avBRCA.m <- readRDS(file.path(consts[['TCGA_datadir']], 'TCGA.avBRCA.m.rds'))
 } else{
@@ -44,6 +57,10 @@ estF.o <- wRPC(avBRCA.m,
                useW=TRUE, wth=0.4, maxit=200 # Parameters used in tutorial vignette
                )
 celltype.fractions <- estF.o$estF
+rownames(celltype.fractions) <- getTumorIDs(rownames(celltype.fractions))
+
+saveRDS(celltype.fractions,
+        file.path(consts[['TCGA_datadir']], 'EpiSCORE.celltype.fractions.rds'))
 ```
 
 ## First 6 rows of output
@@ -54,23 +71,10 @@ head(celltype.fractions) |> kable()
 
 ```{r, warning=F, message=F}
 
-keepN_fields <- function(x, n) {
-  fields <- strsplit(x, "-")[[1]]
-  paste(fields[1:n], collapse = "-")
-}
-getParticipantIDs <- function(fullTumorIDs) {
-  sapply(fullTumorIDs, function (x) keepN_fields(x, 3), USE.NAMES=F)
-}
-getTumorIDs <- function(fullTumorIDs) {
-  sapply(fullTumorIDs, function (x) keepN_fields(x, 4), USE.NAMES=F)
-}
-
 clinical <- read.table(file.path(
   consts['TCGA_datadir'],
   'TCGA.clinical.annotated_revision.tsv'), sep='\t',
   header=T)
-
-rownames(celltype.fractions) <- getTumorIDs(rownames(celltype.fractions))
 
 # No tumors are duplicated
 # print(any(duplicated(rownames(celltype.fractions))))
@@ -100,5 +104,9 @@ celltype.fractions %>%
   xlim(0, 1) + ylim(0, 1)
 
 summary(lm(Epithelial ~ CPE, data=celltype.fractions))
+
+R.value <- round(cor(celltype.fractions$Epithelial, celltype.fractions$CPE), 2)
 ```
 
+
+Correlation of epithelial fraction with CPE: R = `r R.value`
