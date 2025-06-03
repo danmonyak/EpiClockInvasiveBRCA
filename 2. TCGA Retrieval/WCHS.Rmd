@@ -1,0 +1,97 @@
+---
+title: "Obtain WCHS Dataset"
+date: "`r Sys.Date()`"
+output: html_document
+params:
+  save_path: "WCHS"
+  series_id: "GSE226569"
+  download_idat: FALSE
+---
+
+## Setup
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# This package streamlines the data pull from GEO
+library(GEOquery)
+library(jsonlite)
+library(sesame)
+
+# Download the required annotation datasets
+sesameDataCache(c('idatSignature', 'HM450.address', 'KYCG.HM450.Mask.20220123'))
+
+consts <- read_json(file.path(repo_dir, 'src', 'consts.json'))
+
+box.save_path <- file.path(consts['official_indir'], params$save_path)
+save_path <- file.path(box.save_path, 'sample_files')
+if (!dir.exists(save_path)) {
+  dir.create(save_path)
+}
+```
+
+## Downlaod all IDAT files
+
+```{r}
+gse <- getGEO(params$series_id, GSEMatrix = T)
+gse <- gse[[names(gse)]]
+sample_accessions <- gse$geo_accession
+sample_titles <- gse$title
+
+if (params$download_idat) {
+  # Download all supplementary files (including IDATs)
+  for (i in 1:length(sample_accessions)) {
+    print(i)
+    if (i %% 10 == 0) {
+      print(sprintf('Downloading sample %d of %d', i, length(sample_accessions)))
+    }
+    access <- sample_accessions[i]
+    dum <- getGEOSuppFiles(access, baseDir=save_path, makeDirectory=T,
+                  fetch_files=T)
+  }
+}
+```
+
+## Process IDATs into Beta values with standard QC, normalization, etc.
+
+Only save Clock CpG and LUMP CpG values
+```{r}
+# CpGs to save
+Clock_CpGs <- read.table(file.path(consts[['repo_dir']],
+                                   '3. Select fCpGs', 'outputs_revision',
+                                   'Clock_CpGs.txt'))$V1
+LUMP_CpGs <- read.table(file.path(consts[['repo_dir']], 'data',
+                                  'lump-CpGs-44.txt'))$V1
+save_CpGs <- c(Clock_CpGs, LUMP_CpGs)
+
+# beta_values.list <- list()
+for (i in 1:length(sample_accessions)) {
+  if (i %% 10 == 0) {
+    print(sprintf('Processing sample %d of %d', i, length(sample_accessions)))
+    }
+  access <- sample_accessions[i]
+  beta_values.tum <- openSesame(file.path(save_path, access))
+  # if (i == 1) {
+  #   CpG.order <- names(beta_values.tum)
+  # } else if (! all(names(beta_values.tum) == CpG.order)) {
+  #   stop(sprintf("Order of CpG sites is different in sample %d! Stop and investigate this.", i))
+  # }
+  beta_values.tum <- beta_values.tum[save_CpGs]
+  
+  write.table(t(beta_values.tum), file.path(box.save_path, "beta_values.ClockAndLUMP.manual.transposed.tsv"),
+            sep = "\t",
+            append = (i > 1),
+            col.names = (i == 1),
+            row.names = sample_titles[i])
+  
+  # beta_values.list[[access]] <- beta_values.tum
+}
+
+# Combine vectors in a single dataframe
+# beta_values <- data.frame(beta_values.list)
+
+# Save to file
+# write.table(beta_values, file.path(box.save_path, "beta_values.manual.tsv"),
+#             sep = "\t")
+```
+
