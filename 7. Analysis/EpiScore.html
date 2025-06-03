@@ -439,7 +439,7 @@ display: none;
 
 <h1 class="title toc-ignore">EpiScore</h1>
 <h4 class="author">Daniel Monyak</h4>
-<h4 class="date">27 May, 2025</h4>
+<h4 class="date">02 June, 2025</h4>
 
 </div>
 
@@ -456,6 +456,19 @@ data(BreastRef)
 
 consts &lt;- read_json(file.path(repo_dir, &#39;src&#39;, &#39;consts.json&#39;))
 
+### Helper functions
+keepN_fields &lt;- function(x, n) {
+  fields &lt;- strsplit(x, &quot;-&quot;)[[1]]
+  paste(fields[1:n], collapse = &quot;-&quot;)
+}
+getParticipantIDs &lt;- function(fullTumorIDs) {
+  sapply(fullTumorIDs, function (x) keepN_fields(x, 3), USE.NAMES=F)
+}
+getTumorIDs &lt;- function(fullTumorIDs) {
+  sapply(fullTumorIDs, function (x) keepN_fields(x, 4), USE.NAMES=F)
+}
+########################
+
 if (params$loadAvgData) {
   avBRCA.m &lt;- readRDS(file.path(consts[[&#39;TCGA_datadir&#39;]], &#39;TCGA.avBRCA.m.rds&#39;))
 } else{
@@ -470,20 +483,24 @@ estF.o &lt;- wRPC(avBRCA.m,
                ref=mrefBreast.m,
                useW=TRUE, wth=0.4, maxit=200 # Parameters used in tutorial vignette
                )
-celltype.fractions &lt;- estF.o$estF</code></pre>
+celltype.fractions &lt;- estF.o$estF
+rownames(celltype.fractions) &lt;- getTumorIDs(rownames(celltype.fractions))
+
+saveRDS(celltype.fractions,
+        file.path(consts[[&#39;TCGA_datadir&#39;]], &#39;EpiSCORE.celltype.fractions.rds&#39;))</code></pre>
 <div id="first-6-rows-of-output" class="section level2">
 <h2>First 6 rows of output</h2>
 <pre class="r"><code>head(celltype.fractions) |&gt; kable()</code></pre>
 <table style="width:100%;">
 <colgroup>
-<col width="29%" />
-<col width="10%" />
-<col width="10%" />
-<col width="10%" />
-<col width="10%" />
-<col width="10%" />
-<col width="10%" />
-<col width="10%" />
+<col width="19%" />
+<col width="11%" />
+<col width="11%" />
+<col width="11%" />
+<col width="11%" />
+<col width="11%" />
+<col width="11%" />
+<col width="11%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -499,7 +516,7 @@ celltype.fractions &lt;- estF.o$estF</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">TCGA-D8-A27G-01A-11D-A16G-05</td>
+<td align="left">TCGA-D8-A27G-01A</td>
 <td align="right">0.0673697</td>
 <td align="right">0.1790730</td>
 <td align="right">0.0711669</td>
@@ -509,7 +526,7 @@ celltype.fractions &lt;- estF.o$estF</code></pre>
 <td align="right">0.0292776</td>
 </tr>
 <tr class="even">
-<td align="left">TCGA-E2-A1B1-01A-21D-A12R-05</td>
+<td align="left">TCGA-E2-A1B1-01A</td>
 <td align="right">0.1992536</td>
 <td align="right">0.1613156</td>
 <td align="right">0.0999813</td>
@@ -519,7 +536,7 @@ celltype.fractions &lt;- estF.o$estF</code></pre>
 <td align="right">0.0879617</td>
 </tr>
 <tr class="odd">
-<td align="left">TCGA-AN-A0XO-01A-11D-A10A-05</td>
+<td align="left">TCGA-AN-A0XO-01A</td>
 <td align="right">0.1400009</td>
 <td align="right">0.1582059</td>
 <td align="right">0.1195248</td>
@@ -529,7 +546,7 @@ celltype.fractions &lt;- estF.o$estF</code></pre>
 <td align="right">0.0000000</td>
 </tr>
 <tr class="even">
-<td align="left">TCGA-AR-A255-01A-11D-A16A-05</td>
+<td align="left">TCGA-AR-A255-01A</td>
 <td align="right">0.0569361</td>
 <td align="right">0.1680278</td>
 <td align="right">0.0796208</td>
@@ -539,7 +556,7 @@ celltype.fractions &lt;- estF.o$estF</code></pre>
 <td align="right">0.0562887</td>
 </tr>
 <tr class="odd">
-<td align="left">TCGA-GM-A5PV-01A-11D-A28C-05</td>
+<td align="left">TCGA-GM-A5PV-01A</td>
 <td align="right">0.2042721</td>
 <td align="right">0.1635981</td>
 <td align="right">0.1051865</td>
@@ -549,7 +566,7 @@ celltype.fractions &lt;- estF.o$estF</code></pre>
 <td align="right">0.0154308</td>
 </tr>
 <tr class="even">
-<td align="left">TCGA-S3-A6ZG-01A-22D-A32T-05</td>
+<td align="left">TCGA-S3-A6ZG-01A</td>
 <td align="right">0.2840710</td>
 <td align="right">0.0607722</td>
 <td align="right">0.1254450</td>
@@ -560,30 +577,17 @@ celltype.fractions &lt;- estF.o$estF</code></pre>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>keepN_fields &lt;- function(x, n) {
-  fields &lt;- strsplit(x, &quot;-&quot;)[[1]]
-  paste(fields[1:n], collapse = &quot;-&quot;)
-}
-getParticipantIDs &lt;- function(fullTumorIDs) {
-  sapply(fullTumorIDs, function (x) keepN_fields(x, 3), USE.NAMES=F)
-}
-getTumorIDs &lt;- function(fullTumorIDs) {
-  sapply(fullTumorIDs, function (x) keepN_fields(x, 4), USE.NAMES=F)
-}
-
-clinical &lt;- read.table(file.path(
+<pre class="r"><code>clinical &lt;- read.table(file.path(
   consts[&#39;TCGA_datadir&#39;],
   &#39;TCGA.clinical.annotated_revision.tsv&#39;), sep=&#39;\t&#39;,
   header=T)
-
-rownames(celltype.fractions) &lt;- getTumorIDs(rownames(celltype.fractions))
 
 # No tumors are duplicated
 # print(any(duplicated(rownames(celltype.fractions))))
 # [1] FALSE
 
 celltype.fractions &lt;- merge(celltype.fractions,
-                            clinical[, c(&#39;Sample.ID&#39;, &#39;CPE&#39;)],
+                            clinical[, c(&#39;Sample.ID&#39;, &#39;CPE&#39;, &#39;c_beta&#39;)],
                             by.x=0, by.y=&#39;Sample.ID&#39;, all.x=T)
 celltype.fractions$Epithelial &lt;- celltype.fractions$Basal + celltype.fractions$Luminal</code></pre>
 </div>
@@ -643,6 +647,8 @@ celltype.fractions$Epithelial &lt;- celltype.fractions$Basal + celltype.fraction
 ## Residual standard error: 0.09349 on 632 degrees of freedom
 ## Multiple R-squared:  0.3979, Adjusted R-squared:  0.3969 
 ## F-statistic: 417.6 on 1 and 632 DF,  p-value: &lt; 2.2e-16</code></pre>
+<pre class="r"><code>R.value &lt;- round(cor(celltype.fractions$Epithelial, celltype.fractions$CPE), 2)</code></pre>
+<p>Correlation of epithelial fraction with CPE: R = 0.63</p>
 </div>
 
 
