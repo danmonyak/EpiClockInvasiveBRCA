@@ -24,19 +24,7 @@ library(kableExtra)
 data(BreastRef)
 
 consts <- read_json(file.path(repo_dir, 'src', 'consts.json'))
-
-### Helper functions
-keepN_fields <- function(x, n) {
-  fields <- strsplit(x, "-")[[1]]
-  paste(fields[1:n], collapse = "-")
-}
-getParticipantIDs <- function(fullTumorIDs) {
-  sapply(fullTumorIDs, function (x) keepN_fields(x, 3), USE.NAMES=F)
-}
-getTumorIDs <- function(fullTumorIDs) {
-  sapply(fullTumorIDs, function (x) keepN_fields(x, 4), USE.NAMES=F)
-}
-########################
+source(file.path(repo_dir, 'src', 'EpiClockUtil.R'))
 
 if (params$loadAvgData) {
   avBRCA.m <- readRDS(file.path(consts[['TCGA_datadir']], 'TCGA.avBRCA.m.rds'))
