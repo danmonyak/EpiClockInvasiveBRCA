@@ -9,7 +9,11 @@ editor_options:
   markdown: 
     wrap: 72
 params:
-  loadAvgData: True
+  loadAvgData: False
+  methylRDS: False
+  dataset: 'Lund'
+  # methyl_filename: 'TCGA.methyl.rds'
+  methyl_filename: "GSE75067_betaValues.txt"
 ---
 
 ```{r, warning=F, message=F}
@@ -26,14 +30,23 @@ data(BreastRef)
 consts <- read_json(file.path(repo_dir, 'src', 'consts.json'))
 source(file.path(repo_dir, 'src', 'EpiClockUtil.R'))
 
+proj_dir <- file.path(consts[['official_indir']], params$dataset)
+avgMethylFilename <- sprintf('%s.avBRCA.m.rds', params$dataset)
+
 if (params$loadAvgData) {
-  avBRCA.m <- readRDS(file.path(consts[['TCGA_datadir']], 'TCGA.avBRCA.m.rds'))
-} else{
-  dataBRCA.m <- readRDS(file.path(consts[['TCGA_datadir']], 'TCGA.methyl.rds'))
+  avBRCA.m <- readRDS(file.path(proj_dir, avgMethylFilename))
+} else {
+  if (params$methylRDS) {
+    dataBRCA.m <- readRDS(file.path(proj_dir, params$methyl_filename))
+  } else {
+    dataBRCA.m <- processBetaValues(
+      file.path(proj_dir, params$methyl_filename)
+      )
+  }
   
   # Construct a DNAm matrix at gene-promoter level
   avBRCA.m <- constAvBetaTSS(dataBRCA.m, type="450k")
-  saveRDS(avBRCA.m, file.path(consts[['TCGA_datadir']], 'TCGA.avBRCA.m.rds'))
+  saveRDS(avBRCA.m, file.path(proj_dir, avgMethylFilename))
 }
 ```
 
@@ -48,7 +61,7 @@ celltype.fractions <- estF.o$estF
 rownames(celltype.fractions) <- getTumorIDs(rownames(celltype.fractions))
 
 saveRDS(celltype.fractions,
-        file.path(consts[['TCGA_datadir']], 'EpiSCORE.celltype.fractions.rds'))
+        file.path(proj_dir, 'EpiSCORE.celltype.fractions.rds'))
 ```
 
 ## First 6 rows of output
