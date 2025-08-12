@@ -4,6 +4,7 @@
     "official_indir": "/Users/danielmonyak/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets",
     "TCGA_datadir": "/Users/danielmonyak/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/TCGA",
     "Lund_datadir": "/Users/danielmonyak/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/1. Analytic Datasets/Lund",
+    "Figure_data_dir": "/Users/danielmonyak/Library/CloudStorage/Box-Box/PROJECT 06023: MolClocks/MolClock_Paper_1/0. PAPER/5. Revision/Final Submission To-Do/Figure Data",
     "lump_threshold_dict": {
         "Johnson": 0.7,
         "Lund": 0.6,

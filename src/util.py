@@ -693,3 +693,19 @@ def plotTumorWise(beta_values, CpG_list=None, sample_list=None, n_samps=30, ncol
         print('Provide a file name...')
     else:      # Save plot
         fig.savefig(os.path.join(outdir, outfile_name), format='pdf', pad_inches=0.1)    
+
+
+
+def saveFigureData(figure_data, figure_name):
+    """
+    Save a dataframe in the Figure_data_dir directory WITHOUT the index
+    
+    Parameters
+    ----------
+    figure_data : Pandas Dataframe
+        data to save
+    figure_name : str
+        prefix of filename
+    """
+    figure_data.to_csv(os.path.join(consts['Figure_data_dir'], f'{figure_name}.tsv'), sep='\t',
+                      index=False)
