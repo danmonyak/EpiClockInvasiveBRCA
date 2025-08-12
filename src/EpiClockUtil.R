@@ -20,3 +20,10 @@ getTumorIDs <- function(fullTumorIDs) {
   sapply(fullTumorIDs, function (x) keepN_fields(x, 4), USE.NAMES=F)
 }
 ########################
+
+processBetaValues <- function(tsvfilepath) {
+	beta_values <- read.table(file.path(tsvfilepath), sep='\t', header=T)
+    rownames(beta_values) <- beta_values[, 1]
+    beta_values <- beta_values[, 2:ncol(beta_values)]
+    beta_values
+}
