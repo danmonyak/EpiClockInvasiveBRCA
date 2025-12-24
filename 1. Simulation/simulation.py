@@ -16,7 +16,7 @@ Time is handled discretely
     
 """
 
-from time import process_time, sleep
+from time import process_time, sleep, time
 import sys
 import numpy as np
 import pandas as pd
@@ -60,6 +60,53 @@ def betaCorr(beta1, beta2):
     """
     rvalue = linregress(beta1, beta2).rvalue
     return rvalue
+
+
+class EnsembleContainer:
+    def __init__(self):
+        self.ensmbl_list = []
+    def addEnsemble(self, ensmbl):
+        self.ensmbl_list.append(ensmbl)
+    def getCombinedActiveStateArr(self):
+        return np.concatenate([ensmbl.state_arr[ensmbl.living_cells] for ensmbl in self.ensmbl_list], axis=0)
+    def getBetaValues(self, time_obj):
+        time_obj['getBetaValues - line1'] -= time()
+        combined_state_arr = self.getCombinedActiveStateArr()
+        time_obj['getBetaValues - line1'] += time()
+        time_obj['getBetaValues - line2'] -= time()
+        betas = betasFromStates(combined_state_arr)
+        time_obj['getBetaValues - line2'] += time()
+        return betas
+    def getNumCells(self):
+        return sum([ensmbl.getNumCells() for ensmbl in self.ensmbl_list])
+    def passDay(self):
+        new_ensmbls = []
+        del_ensmbls_idxs = []
+        for i, ensmbl in enumerate(self.ensmbl_list):
+            response = ensmbl.passDay()
+            if response and (response['result'] == 'success'): # passDay was successful
+                pass
+            elif response and (response['result'] == 'split'):
+                new_ensmbls.extend(response['data'])
+                del_ensmbls_idxs.append(i)
+            else:
+                return False
+
+        if len(del_ensmbls_idxs) > 0:
+            for i, ensmbl in enumerate(self.ensmbl_list):
+                if i not in del_ensmbls_idxs:
+                    new_ensmbls.append(ensmbl)
+            self.ensmbl_list = new_ensmbls
+        
+        return True
+    
+    def reInit(self):
+        self.ensmbl_list = self.ensmbl_list[:1]
+        self.ensmbl_list[0].reInit()
+    def atCapacity(self):
+        return any([ensmbl.atCapacity() for ensmbl in self.ensmbl_list])
+    def getNumEnsembles(self):
+        return len(self.ensmbl_list)
 
 
 class Ensemble:
@@ -106,7 +153,7 @@ class Ensemble:
     
     """
     
-    def __init__(self, init_params, gen, max_cells=MAX_CELLS):
+    def __init__(self, init_params, gen, max_cells=MAX_CELLS, re_init=True, split=False, split_limit=None, n_split=5):
         """
         Parameters
         ----------
@@ -121,10 +168,13 @@ class Ensemble:
         
         self.init_params = init_params
         self.gen = gen
-        self.max_cells = max_cells
+        if split_limit is not None:
+            self.max_cells = split_limit * 5
+        else:
+            self.max_cells = max_cells
         
-        self.available_cells = list(range(self.max_cells))[::-1]
-        self.living_cells = [self.available_cells.pop()]        # Initialize with one cell
+        # self.available_cells = list(range(self.max_cells))[::-1]
+        # self.living_cells = [self.available_cells.pop()]        # Initialize with one cell
         
         # Determine # CpG sites
         if 'n_CpGs' in self.init_params:
@@ -135,10 +185,47 @@ class Ensemble:
         
         self.state_arr = np.zeros([self.max_cells, n_CpGs], dtype='byte')
         print('Allocated memory!')
-        
-        self.reInit()
+
+        if re_init:
+            self.reInit()
         self.at_capacity = False
-    
+
+        ################################################################
+        ################################################################
+        
+        self.split = split
+        self.split_limit = split_limit
+        self.n_split = n_split
+
+    def returnEnsembleSplits(self):
+        n_cells = self.getNumCells()
+        
+        slice_idxs = list(map(int, np.linspace(0, n_cells, self.n_split + 1)))
+        # print(f'slice_idxs: {slice_idxs}')
+        new_ens_list = []
+        for i in range(len(slice_idxs) - 1):
+            start = slice_idxs[i]
+            stop = slice_idxs[i+1]
+            n_cells_new = stop - start
+            # print(l[slice(start, stop)])
+
+            if n_cells_new == 0:
+                continue
+
+            new_gen = np.random.default_rng(int(1000*self.gen.random()))
+            new_ens = Ensemble(self.init_params, new_gen, self.max_cells,
+                               re_init=False,
+                               split=True,
+                               split_limit=self.split_limit, 
+                               n_split=self.n_split)
+            new_ens.available_cells = list(range(new_ens.max_cells))[::-1]
+            new_ens.living_cells = [new_ens.available_cells.pop() for k in range(n_cells_new)]
+            new_ens.state_arr[new_ens.living_cells] = self.state_arr[self.living_cells[slice(start, stop)]]
+
+            new_ens_list.append(new_ens)
+
+        return new_ens_list
+        
     def copy(self, new_gen):
         """
         Create copy of fCpG ensemble
@@ -209,6 +296,9 @@ class Ensemble:
             init_site_state_counts holds desired number of sites in each state in first cell
         """
         
+        self.available_cells = list(range(self.max_cells))[::-1]
+        self.living_cells = [self.available_cells.pop()]        # Initialize with one cell
+        
         if ('n_CpGs' in self.init_params) and ('init_site_state_probs' in self.init_params):
             self.state_arr[self.living_cells[0]] = self.gen.choice(4, p=self.init_params['init_site_state_probs'], size=[1, self.init_params['n_CpGs']])
         elif 'init_site_state_counts' in self.init_params:
@@ -277,6 +367,15 @@ class Ensemble:
            bool : False if the tumor was eliminated or it ran out of available cells, else True
         
         """
+
+        # Split cell population for efficiency
+        if self.split and (self.getNumCells() > self.split_limit):
+            return {'result':'split', 'data':self.returnEnsembleSplits()}
+            
+        ###########################################################################
+        ###########################################################################
+        ###########################################################################
+            
         
         n_divide, n_die, n_nothing = self.gen.multinomial(self.getNumCells(), pvals=[self.init_params['prolif_rate'], self.init_params['death_rate'], 1 - self.init_params['prolif_rate'] - self.init_params['death_rate']])
         
@@ -324,7 +423,8 @@ class Ensemble:
 #         new_cell_states ^ flip_event_arr
 #         self.state_arr = np.vstack([self.state_arr, new_cell_states])
     
-        return True    # tumor is still alive
+        # return True    # tumor is still alive
+        return {'result':'success'}
 
 
 def plotBetaValues(ax, beta_values=None, binwidth=None, color=None, opacity=None,
