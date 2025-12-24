@@ -1,4 +1,7 @@
 # Measuring the Age of Individual Breast Cancers Using an Entropy-Based Molecular Clock
+# EpiClockInvasiveBRCA
+
+[![DOI](https://zenodo.org/badge/758688116.svg)](https://doi.org/10.5281/zenodo.16813782)
 
 ## 1. Introduction
 
@@ -132,3 +135,4 @@ To generate the GSEA-related figures and generate the HTML output, set the heade
 ```
 Rscript -e "rmarkdown::render('GSEA_Figure.Rmd', output_format = 'html_document', output_file = paste0('GSEA_Figure ', Sys.time(), '.html'))"
 ```
+
