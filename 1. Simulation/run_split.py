@@ -21,7 +21,7 @@ from src.util import *
 ###########################################################################
 if len(sys.argv) == 1:
     sys.exit('Enter index of split...')
-split_i = int(sys.argv[1])
+split_i = sys.argv[1]
 
 split_name = f'{split_i}'
 
