@@ -258,7 +258,10 @@ class Ensemble:
 
             new_gen = np.random.default_rng(int(1000*self.gen.random()))
             if split_ens_max_cells is None:
-                split_ens_max_cells = self.max_cells
+                if save_not_return:
+                    split_ens_max_cells = n_cells_new
+                else:
+                    split_ens_max_cells = self.max_cells
             new_ens = Ensemble(self.init_params, new_gen, split_ens_max_cells,
                                re_init=False,
                                split=True,
