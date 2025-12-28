@@ -68,7 +68,7 @@ if os.path.exists(split_jobs_filepath):
 total_before = time()
 i = ensmbl.day
 k = 0    # i is day, k is iteration (i \neq j iff the simulation restarts)
-while (not ensmbl.atCapacity()) and (i < total_days+1):
+while (not ensmbl.atCapacity()):
     if k == 1e9:     # don't loop forever
         sys.exit()
 
