@@ -276,9 +276,10 @@ class Ensemble:
             # 
             if save_not_return:
                 split_name = f'split_{i}'
-                self.saveAsDirectory(parent_outdir=self.save_info['saveAsDirectory_parent_outdir'],
-                                     outdir=split_name
-                                    )
+                new_ens.saveAsDirectory(
+                    parent_outdir=self.save_info['saveAsDirectory_parent_outdir'],
+                    outdir=split_name
+                )
                 writeLine(self.save_info['split_jobs_filepath'], split_name)
             else:
                 new_ens_list.append(new_ens)
