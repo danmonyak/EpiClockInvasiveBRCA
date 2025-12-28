@@ -19,13 +19,13 @@ from src.util import *
 ###########################################################################
 ################################ Arguments ################################
 ###########################################################################
-split_limit = int(1e6)
-n_split = 6
+split_limit = int(1e7)
+n_split = 200
 ###########################################################################
 ###########################################################################
 
 
-prog_params = {'output_dir':'90_sites_NB_split_base', 'n_CpGs_each':30, 'flip_rate':0.005, 'death_rate':0.12, 'nyears':1, 'seed':0}
+prog_params = {'output_dir':'90_sites_NB_split_base', 'n_CpGs_each':30, 'flip_rate':0.005, 'death_rate':0.113, 'nyears':1, 'seed':0}
 
 print(f'Running simulation with the following parameters: {prog_params}')
 
