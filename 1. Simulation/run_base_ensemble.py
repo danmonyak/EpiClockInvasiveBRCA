@@ -19,8 +19,10 @@ from src.util import *
 ###########################################################################
 ################################ Arguments ################################
 ###########################################################################
-split_limit = int(1e7)
-n_split = 200
+# split_limit = int(1e7)
+# n_split = 200
+split_limit = int(1e6)
+n_split = 10
 ###########################################################################
 ###########################################################################
 
@@ -40,6 +42,11 @@ if 'prolif_rate' not in prog_params:
 
 os.makedirs(prog_params['output_dir'], exist_ok=True)
 
+split_jobs_filepath = os.path.join(prog_params['output_dir'], 'split_jobs.txt')
+if os.path.exists(split_jobs_filepath):
+    os.remove(split_jobs_filepath)
+
+
 init_params = {
     'flip_rate':prog_params['flip_rate'], # flip rate per cell division per allele
     'prolif_rate':prog_params['prolif_rate'], # cell divisions per day
@@ -48,7 +55,11 @@ init_params = {
     }
 gen = np.random.default_rng(prog_params['seed'])
 ensmbl = sim.Ensemble(init_params, gen,
-                      split=True, split_limit=split_limit, n_split=n_split
+                      split=True, split_limit=split_limit, n_split=n_split,
+                      save_info = {
+                          'saveAsDirectory_parent_outdir':os.path.join(prog_params['output_dir'], 'splits'),
+                          'split_jobs_filepath':split_jobs_filepath
+                      }
                      )
 
 total_days = int(prog_params['nyears'] * 365)
@@ -63,10 +74,6 @@ if os.path.exists(beta_values_outfilepath):
     os.remove(beta_values_outfilepath)
 if os.path.exists(n_cells_outfilepath):
     os.remove(n_cells_outfilepath)
-
-split_jobs_filepath = os.path.join(prog_params['output_dir'], 'split_jobs.txt')
-if os.path.exists(split_jobs_filepath):
-    os.remove(split_jobs_filepath)
 
 total_before = time()
 i = k = 0    # i is day, k is iteration (i \neq j iff the simulation restarts)
@@ -103,12 +110,12 @@ while (not ensmbl.atCapacity()) and (i < total_days+1):
         ens_splits = response['data']
         print(f'Split into {len(ens_splits)} ensembles.')
         print('#'*50)
-        for i, ens in enumerate(ens_splits):
-            print(f'Writing ensemble {i}...')
-            split_name = f'split_{i}'
-            ens.saveAsDirectory(parent_outdir=os.path.join(prog_params['output_dir'], 'splits'),
-                                outdir=split_name)
-            writeLine(split_jobs_filepath, split_name)
+        # for i, ens in enumerate(ens_splits):
+        #     print(f'Writing ensemble {i}...')
+        #     split_name = f'split_{i}'
+        #     ens.saveAsDirectory(parent_outdir=os.path.join(prog_params['output_dir'], 'splits'),
+        #                         outdir=split_name)
+        #     writeLine(split_jobs_filepath, split_name)
         print('All ensembles written')
         break
     # had to restart (e.g. all cells died)
