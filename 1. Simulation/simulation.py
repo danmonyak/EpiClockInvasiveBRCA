@@ -28,7 +28,7 @@ import datetime
 import pickle
 import os
 import json
-from src.util import *
+from EpiClockInvasiveBRCA.src.simulation_util import *
 
 MAX_CELLS = int(1e8)
 
