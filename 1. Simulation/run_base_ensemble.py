@@ -19,15 +19,15 @@ from EpiClockInvasiveBRCA.src.simulation_util import *
 ###########################################################################
 ################################ Arguments ################################
 ###########################################################################
-# split_limit = int(1e7)
-# n_split = 200
-split_limit = int(1e5)
-n_split = 10
+split_limit = int(1e7)
+n_split = 200
+# split_limit = int(1e5)
+# n_split = 10
 ###########################################################################
 ###########################################################################
 
 
-prog_params = {'output_dir':'90_sites_NB_split_base', 'n_CpGs_each':30, 'flip_rate':0.005, 'death_rate':0.11, 'nyears':1, 'seed':0}
+prog_params = {'output_dir':'90_sites_NB_split_base', 'n_CpGs_each':30, 'flip_rate':0.005, 'death_rate':0.113, 'nyears':1, 'seed':0}
 
 print(f'Running simulation with the following parameters: {prog_params}')
 

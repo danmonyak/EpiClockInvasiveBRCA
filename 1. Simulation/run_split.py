@@ -26,10 +26,10 @@ split_i = sys.argv[1]
 split_name = f'{split_i}'
 
 base_output_dir = '90_sites_NB_split_base'
-# target_cell_count_limit = int(6e6)
-# target_nyears = 1
-target_cell_count_limit = int(1e5)
-target_nyears = 240 / 365
+target_cell_count_limit = int(6e6)
+target_nyears = 1.1
+# target_cell_count_limit = int(1e5)
+# target_nyears = 240 / 365
 ###########################################################################
 ###########################################################################
 
@@ -74,7 +74,7 @@ while (not ensmbl.atCapacity()) and (i < total_days+1):
     n_cells = ensmbl.getNumCells()
     print(f'Day {i} -------- {n_cells} cells -------- {(time() - total_before) / 60:.1f} minutes')
 
-    if (n_cells >= target_cell_count_limit) and (i >= total_days):
+    if (n_cells >= target_cell_count_limit) and (i >= (total_days + 1)):
         print(f'Surpassed {target_cell_count_limit:,} cells and surpassed {total_days} days.')
         print('Ending simulation.')
         break
