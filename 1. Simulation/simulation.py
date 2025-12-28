@@ -28,6 +28,7 @@ import datetime
 import pickle
 import os
 import json
+from src.util import *
 
 MAX_CELLS = int(1e8)
 
@@ -193,7 +194,8 @@ class Ensemble:
     
     """
     
-    def __init__(self, init_params, gen, max_cells=MAX_CELLS, re_init=True, split=False, split_limit=None, n_split=5, day=0):
+    def __init__(self, init_params, gen, max_cells=MAX_CELLS, re_init=True, split=False, split_limit=None, n_split=5, day=0,
+                 save_info=None):
         """
         Parameters
         ----------
@@ -237,8 +239,9 @@ class Ensemble:
         self.split = split
         self.split_limit = split_limit
         self.n_split = n_split
+        save.save_info = save_info
 
-    def returnEnsembleSplits(self):
+    def returnEnsembleSplits(self, split_ens_max_cells=None, save_not_return=False):
         n_cells = self.getNumCells()
         
         slice_idxs = list(map(int, np.linspace(0, n_cells, self.n_split + 1)))
@@ -254,7 +257,9 @@ class Ensemble:
                 continue
 
             new_gen = np.random.default_rng(int(1000*self.gen.random()))
-            new_ens = Ensemble(self.init_params, new_gen, self.max_cells,
+            if split_ens_max_cells is None:
+                split_ens_max_cells = self.max_cells
+            new_ens = Ensemble(self.init_params, new_gen, split_ens_max_cells,
                                re_init=False,
                                split=True,
                                split_limit=self.split_limit, 
@@ -265,9 +270,18 @@ class Ensemble:
             new_ens.living_cells = [new_ens.available_cells.pop() for k in range(n_cells_new)]
             new_ens.state_arr[new_ens.living_cells] = self.state_arr[self.living_cells[slice(start, stop)]]
 
-            new_ens_list.append(new_ens)
+            # 
+            if save_not_return:
+                split_name = f'split_{i}'
+                self.saveAsDirectory(parent_outdir=save_info['saveAsDirectory_parent_outdir'],
+                                     outdir=split_name
+                                    )
+                writeLine(save_info['split_jobs_filepath'], split_name)
+            else:
+                new_ens_list.append(new_ens)
 
-        return new_ens_list
+        if not save_not_return:
+            return new_ens_list
 
     def saveAsDirectory(self, suffix=None, parent_outdir=None, outdir=None):
         if outdir is None:
@@ -446,7 +460,8 @@ class Ensemble:
 
         # Split cell population for efficiency
         if self.split and (self.getNumCells() > self.split_limit):
-            return {'result':'split', 'data':self.returnEnsembleSplits()}
+            save_not_return = self.save_info is not None
+            return {'result':'split', 'data':self.returnEnsembleSplits(save_not_return=save_not_return)}
             
         ###########################################################################
         ###########################################################################
