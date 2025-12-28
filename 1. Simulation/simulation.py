@@ -24,6 +24,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import random
 from scipy.stats import linregress
+import datetime
+import pickle
+import os
+import json
 
 MAX_CELLS = int(1e8)
 
@@ -61,6 +65,42 @@ def betaCorr(beta1, beta2):
     rvalue = linregress(beta1, beta2).rvalue
     return rvalue
 
+    
+
+def loadFromDirectory(indir=None, suffix=None):
+    if indir is None:
+        if suffix is None:
+            raise Exception('Either indir or suffix must be passed...')
+
+        indir = f'simulation_state_{suffix}'
+        
+    with open(os.path.join(indir, 'obj_info.json'), 'r') as f:
+        obj_info = json.load(f)
+
+    
+    with open(os.path.join(indir, 'gen_pickled.bin'), 'rb') as f:
+        obj_info['gen'] = pickle.load(f)
+    obj_info['re_init'] = False
+
+    print('loading')
+    state_arr_alive = np.load(os.path.join(indir, 'state_arr.npy'))
+    print('done loading')
+    n_cells_alive, n_CpGs = state_arr_alive.shape
+
+    print('reallocating memory')
+    state_arr_zero = np.zeros([obj_info['max_cells'] - n_cells_alive, n_CpGs], dtype='byte')
+    state_arr = np.concatenate([state_arr_alive, state_arr_zero], axis=0)
+    assert (state_arr.shape[0] == obj_info['max_cells']) and (state_arr.shape[1] == n_CpGs)
+    
+    available_cells = list(range(obj_info['max_cells']))[::-1]
+    living_cells = [available_cells.pop() for i in range(n_cells_alive)]        # Initialize with one cell
+
+    new_ens = Ensemble(**obj_info)
+    new_ens.available_cells = available_cells
+    new_ens.living_cells = living_cells
+    new_ens.state_arr = state_arr
+
+    return new_ens
 
 class EnsembleContainer:
     def __init__(self):
@@ -153,7 +193,7 @@ class Ensemble:
     
     """
     
-    def __init__(self, init_params, gen, max_cells=MAX_CELLS, re_init=True, split=False, split_limit=None, n_split=5):
+    def __init__(self, init_params, gen, max_cells=MAX_CELLS, re_init=True, split=False, split_limit=None, n_split=5, day=0):
         """
         Parameters
         ----------
@@ -186,6 +226,7 @@ class Ensemble:
         self.state_arr = np.zeros([self.max_cells, n_CpGs], dtype='byte')
         print('Allocated memory!')
 
+        self.day = day
         if re_init:
             self.reInit()
         self.at_capacity = False
@@ -217,7 +258,9 @@ class Ensemble:
                                re_init=False,
                                split=True,
                                split_limit=self.split_limit, 
-                               n_split=self.n_split)
+                               n_split=self.n_split,
+                               day=self.day
+                              )
             new_ens.available_cells = list(range(new_ens.max_cells))[::-1]
             new_ens.living_cells = [new_ens.available_cells.pop() for k in range(n_cells_new)]
             new_ens.state_arr[new_ens.living_cells] = self.state_arr[self.living_cells[slice(start, stop)]]
@@ -225,7 +268,40 @@ class Ensemble:
             new_ens_list.append(new_ens)
 
         return new_ens_list
+
+    def saveAsDirectory(self, suffix=None, parent_outdir=None, outdir=None):
+        if outdir is None:
+            if suffix is None:
+                now = datetime.datetime.now()
+                suffix = now.strftime("%m-%d-%Y-%H-%M-%S")
         
+            outdir = f'simulation_state_{suffix}'
+
+        if parent_outdir is not None:
+            os.makedirs(parent_outdir, exist_ok=True)
+            outdir = os.path.join(parent_outdir, outdir)
+        
+        if os.path.exists(outdir):
+            for fi in os.listdir(outdir):
+                os.remove(os.path.join(outdir, fi))
+        else:
+            os.mkdir(outdir)
+        
+        # Directory for simple fields
+        obj_info = {}
+        for attr in ['init_params', 'max_cells', 'split', 'split_limit', 'n_split', 'day']:
+            obj_info[attr] = getattr(self, attr)
+        
+        with open(os.path.join(outdir, 'obj_info.json'), 'w') as f:
+            f.write(json.dumps(obj_info))
+        
+        gen_pickled = pickle.dumps(self.gen, protocol=pickle.HIGHEST_PROTOCOL)
+        with open(os.path.join(outdir, 'gen_pickled.bin'), 'wb') as f:
+            f.write(gen_pickled)
+        
+        np.save(os.path.join(outdir, 'state_arr.npy'), self.state_arr[self.living_cells])
+
+    
     def copy(self, new_gen):
         """
         Create copy of fCpG ensemble
@@ -295,7 +371,7 @@ class Ensemble:
         If not, but init_site_state_counts is in self.init_params
             init_site_state_counts holds desired number of sites in each state in first cell
         """
-        
+        self.day = 0
         self.available_cells = list(range(self.max_cells))[::-1]
         self.living_cells = [self.available_cells.pop()]        # Initialize with one cell
         
@@ -424,6 +500,7 @@ class Ensemble:
 #         self.state_arr = np.vstack([self.state_arr, new_cell_states])
     
         # return True    # tumor is still alive
+        self.day += 1
         return {'result':'success'}
 
 
