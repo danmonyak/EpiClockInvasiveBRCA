@@ -15,7 +15,7 @@ Paramter set is selected in the command line
 import numpy as np
 import sys
 import os
-from time import process_time, time
+from time import time
 import simulation as sim
 
 def arr2dToString(arr):
@@ -27,7 +27,7 @@ if len(sys.argv) == 1:
 
 params_idx = int(sys.argv[1])
 params_list = [
-    {'output_dir':'90_sites_NB_split', 'n_CpGs_each':30, 'flip_rate':0.005, 'death_rate':0.12, 'nyears':0.5, 'seed':0},
+    {'output_dir':'90_sites_NB_split', 'n_CpGs_each':30, 'flip_rate':0.005, 'death_rate':0.12, 'nyears':1, 'seed':0},
     {'output_dir':'90_sites_2_years_split', 'n_CpGs_each':30, 'death_rate':0.15, 'nyears':2, 'seed':0},
 ]
 prog_params = params_list[params_idx]
@@ -52,7 +52,9 @@ init_params = {'flip_rate':prog_params['flip_rate'], # flip rate per cell divisi
               }
 gen = np.random.default_rng(prog_params['seed'])
 ensmbl = sim.Ensemble(init_params, gen,
-                      split=True, split_limit=int(1e6), n_split=10)
+                      split=True, split_limit=int(1e6), n_split=10,
+                      # max_cells=int(5e6)
+                     )
 
 ensmbl_con = sim.EnsembleContainer()
 ensmbl_con.addEnsemble(ensmbl)
@@ -79,21 +81,22 @@ time_spent = {
 }
 ###################################
 
-total_before = process_time()
+total_before = time()
 i = k = 0    # i is day, k is iteration (i \neq j iff the simulation restarts)
 found_first = found_second = False
 while (not ensmbl_con.atCapacity()) and (i < total_days+1):
     if k == 1e9:     # don't loop forever
         sys.exit()
-    
-    print(f'Day {i}')
+
+    n_cells = ensmbl_con.getNumCells()
+    print(f'Day {i} -------- {n_cells} cells -------- {(time() - total_before) / 60:.1f} minutes')
     
     # Print progress
     if (i > 0) and (i % 50 == 0):
-        n_cells = ensmbl_con.getNumCells()
-        print(f'{n_cells} cells')
-        print()
-        print(f'Size of state_arr: {ensmbl.state_arr.shape}')
+        # n_cells = ensmbl_con.getNumCells()
+        # print(f'{n_cells} cells')
+        # print()
+        # print(f'Size of state_arr: {ensmbl.state_arr.shape}')
 
         print('Flushing results to files...')
         
@@ -147,7 +150,7 @@ while (not ensmbl_con.atCapacity()) and (i < total_days+1):
             
 
 
-after_total = process_time()
+after_total = time()
 print(f'Total time: {after_total - total_before}')
 print(f'Specific time: {time_spent}')
 
