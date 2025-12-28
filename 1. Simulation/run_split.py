@@ -26,7 +26,7 @@ split_i = int(sys.argv[1])
 split_name = f'split_{split_i}'
 
 base_output_dir = '90_sites_NB_split_base'
-target_cell_count_limit = int(1e5)
+target_cell_count_limit = int(1e6)
 ###########################################################################
 ###########################################################################
 
