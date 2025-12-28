@@ -14,15 +14,15 @@ import sys
 import os
 from time import time
 import simulation as sim
-from src.util import *
+from EpiClockInvasiveBRCA.src.simulation_util import *
 
 ###########################################################################
 ################################ Arguments ################################
 ###########################################################################
-# split_limit = int(1e7)
-# n_split = 200
-split_limit = int(1e5)
-n_split = 10
+split_limit = int(1e7)
+n_split = 200
+# split_limit = int(1e5)
+# n_split = 10
 ###########################################################################
 ###########################################################################
 
