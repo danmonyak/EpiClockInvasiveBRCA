@@ -27,7 +27,6 @@ from scipy.stats import linregress
 import datetime
 import pickle
 import os
-import gc
 import json
 from EpiClockInvasiveBRCA.src.simulation_util import *
 
@@ -283,7 +282,6 @@ class Ensemble:
                 )
                 writeLine(self.save_info['split_jobs_filepath'], split_name)
                 del new_ens
-                gc.collect()
             else:
                 new_ens_list.append(new_ens)
 
