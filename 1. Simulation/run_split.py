@@ -29,7 +29,7 @@ base_output_dir = '90_sites_NB_split_base'
 # target_cell_count_limit = int(6e6)
 # target_nyears = 1
 target_cell_count_limit = int(1e5)
-target_nyears = 240
+target_nyears = 240 / 365
 ###########################################################################
 ###########################################################################
 
