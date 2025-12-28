@@ -239,7 +239,7 @@ class Ensemble:
         self.split = split
         self.split_limit = split_limit
         self.n_split = n_split
-        save.save_info = save_info
+        self.save_info = save_info
 
     def returnEnsembleSplits(self, split_ens_max_cells=None, save_not_return=False):
         n_cells = self.getNumCells()
@@ -273,10 +273,10 @@ class Ensemble:
             # 
             if save_not_return:
                 split_name = f'split_{i}'
-                self.saveAsDirectory(parent_outdir=save_info['saveAsDirectory_parent_outdir'],
+                self.saveAsDirectory(parent_outdir=self.save_info['saveAsDirectory_parent_outdir'],
                                      outdir=split_name
                                     )
-                writeLine(save_info['split_jobs_filepath'], split_name)
+                writeLine(self.save_info['split_jobs_filepath'], split_name)
             else:
                 new_ens_list.append(new_ens)
 

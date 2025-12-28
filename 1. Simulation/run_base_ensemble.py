@@ -21,7 +21,7 @@ from src.util import *
 ###########################################################################
 # split_limit = int(1e7)
 # n_split = 200
-split_limit = int(1e6)
+split_limit = int(1e5)
 n_split = 10
 ###########################################################################
 ###########################################################################
@@ -108,7 +108,7 @@ while (not ensmbl.atCapacity()) and (i < total_days+1):
         i += 1
     elif response and (response['result'] == 'split'):
         ens_splits = response['data']
-        print(f'Split into {len(ens_splits)} ensembles.')
+        print(f'Split into {ensmbl.n_split} ensembles.')
         print('#'*50)
         # for i, ens in enumerate(ens_splits):
         #     print(f'Writing ensemble {i}...')
