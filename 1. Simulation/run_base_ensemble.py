@@ -13,6 +13,7 @@ import numpy as np
 import sys
 import os
 from time import time
+from math import floor
 import simulation as sim
 from EpiClockInvasiveBRCA.src.simulation_util import *
 
@@ -23,14 +24,32 @@ split_limit = int(1e7)
 n_split = 200
 # split_limit = int(1e5)
 # n_split = 10
+
+sigma = 0.05842
+digits = 1
+delta_t_raw = 1/(2-sigma)
+delta_t = floor(delta_t_raw * 10**digits) / 10**digits
+total_time_years_param = 1
 ###########################################################################
 ###########################################################################
 
 
-prog_params = {'output_dir':'90_sites_NB_split_base', 'n_CpGs_each':30,
+prog_params_list = [
+    {'output_dir':'90_sites_NB_split_base', 'n_CpGs_each':30,
                # 'flip_rate':(0.0042 / .17),
                'flip_rate':0.0075,
-               'death_rate':0.11158, 'nyears':1, 'seed':0}
+               'death_rate':0.11158, 'nyears':1, 'seed':0},
+    {'output_dir':'90_sites_NB_split_base', 'n_CpGs_each':30,
+               # 'flip_rate':(0.0042 / .17),
+               'prolif_rate':delta_t,
+               'flip_rate':1e-3,
+               'death_rate':(1-sigma) * delta_t,
+               'nyears':total_time_years_param / delta_t,
+               'delta_t':delta_t,
+               'seed':0}
+]
+
+prog_params = prog_params_list[1]
 
 print(f'Running simulation with the following parameters: {prog_params}')
 
