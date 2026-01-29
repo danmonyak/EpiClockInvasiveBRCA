@@ -4,7 +4,7 @@
     "official_indir": "/PATH/TO/1. Analytic Datasets",
     "TCGA_datadir": "/PATH/TO/1. Analytic Datasets/TCGA",
     "Lund_datadir": "/PATH/TO/1. Analytic Datasets/Lund",
-    "Figure_data_dir": "/PATH/TO/Figure Data/",
+    "Figure_data_dir": "/PATH/TO/Figure Data",
     "lump_threshold_dict": {
         "Johnson": 0.7,
         "Lund": 0.6,
@@ -12,7 +12,6 @@
         "Desmedt": 0.6,
         "Default": 0.6
     },
-    "a":3,
     "palette_jco": [
         "#0073C2FF",
         "#EFC000FF",
