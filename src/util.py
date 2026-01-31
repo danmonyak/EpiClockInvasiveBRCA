@@ -702,7 +702,7 @@ def plotTumorWise(beta_values, CpG_list=None, sample_list=None, n_samps=30, ncol
 
 def saveFigureData(figure_data, figure_name):
     """
-    Save a dataframe in the Figure_data_dir directory WITHOUT the index
+    Save a dataframe in the Figure_data_dir directory, WITHOUT the index, to the "Figure_data_dir" directory
     
     Parameters
     ----------
