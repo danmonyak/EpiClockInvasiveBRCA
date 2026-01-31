@@ -315,7 +315,6 @@ def saveBoxPlotNew(sample_annotations, var_cat, var_y='c_beta', restrict=True, u
     
     # Define final DataFrame for plotting
     ###### DELETE but check first
-#     plot_data = sample_annotations.loc[use_samples_mask, [var_cat, var_y]].dropna()
     plot_data = sample_annotations.loc[use_samples_mask, [var_cat, var_y]]
     
     # Sanity check
