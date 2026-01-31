@@ -27,16 +27,23 @@ Find the absolute path to the repository directory (repo_dir) whenever this modu
 repo_dir is needed to read src/consts.json
 """
 ################################################
+exception_msg = '-'*120
+exception_msg += '\nutil.py module can only imported inside of the EpiClockInvasiveBRCA directory (or a subdirectory)'
+exception_msg += '\nIf running a .py script, navigate to the subdirectory and run "python <script.py>"'
+exception_msg += '\nIf running a .ipynb jupyter notebook, ensure that the jupyter server was started inside the EpiClockInvasiveBRCA directory.'
+exception_msg += '\n' + '-'*139
+
 subdir_list = os.getcwd().split(os.sep)
 while True:
     try:
         if subdir_list[-1] == 'EpiClockInvasiveBRCA':
             break
-    except:
-        sys.exit('util.py module can only imported inside of the EpiClockInvasiveBRCA directory (or a subdirectory)')
+    except IndexError:
+        raise Exception(exception_msg) from None
     
     subdir_list.pop()
-        
+
+
 repo_dir = os.path.join(os.sep, *subdir_list)
 ################################################
 # Load the variables in consts.json into a dictionary
