@@ -1,0 +1,6 @@
+{
+    "repo_dir": "/PATH/TO/EpiClockInvasiveBRCA",
+    "official_indir": "/PATH/TO/1. Analytic Datasets",
+    "TCGA_datadir": "/PATH/TO/1. Analytic Datasets/TCGA",
+    "Lund_datadir": "/PATH/TO/1. Analytic Datasets/Lund",
+}
