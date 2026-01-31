@@ -1,10 +1,4 @@
 {
-    
-    "repo_dir": "/PATH/TO/EpiClockInvasiveBRCA",
-    "official_indir": "/PATH/TO/1. Analytic Datasets",
-    "TCGA_datadir": "/PATH/TO/1. Analytic Datasets/TCGA",
-    "Lund_datadir": "/PATH/TO/1. Analytic Datasets/Lund",
-    "Figure_data_dir": "/PATH/TO/Figure Data",
     "lump_threshold_dict": {
         "Johnson": 0.7,
         "Lund": 0.6,
