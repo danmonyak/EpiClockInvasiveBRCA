@@ -18,3 +18,4 @@ Archive
 *.pdf
 age_tables.docx
 src/.Rapp.history
+config.json
